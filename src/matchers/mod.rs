@@ -5,6 +5,7 @@ pub use one_shot::OneShot;
 pub use start_of_next_line::StartOfNextLine;
 
 use pulldown_cmark::{Event, Tag};
+use std::borrow::Borrow;
 
 /// A predicate which can be fed a stream of [`Event`]s and tell you whether
 /// they match a desired condition.
@@ -28,6 +29,29 @@ pub trait Matcher {
     /// predicate.
     fn first_match(&mut self, events: &[Event<'_>]) -> Option<usize> {
         events.iter().position(|ev| self.process_next(ev))
+    }
+
+    /// Checks whether this [`Matcher`] would match anything in a stream of
+    /// [`Event`]s.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use markedit::Matcher;
+    /// let src = "# Heading\nsome text";
+    /// let matcher = markedit::text("some text");
+    ///
+    /// assert!(matcher.is_in(markedit::parse_events(src)));
+    /// ```
+    fn is_in<'src, I, E>(mut self, events: I) -> bool
+    where
+        I: IntoIterator<Item = E> + 'src,
+        E: Borrow<Event<'src>>,
+        Self: Sized,
+    {
+        events
+            .into_iter()
+            .any(|ev| self.process_next(ev.borrow()))
     }
 
     /// Returns a [`Matcher`] which will wait until `self` matches, then return
