@@ -1,6 +1,8 @@
+mod heading;
 mod one_shot;
 mod start_of_next_line;
 
+pub use heading::Heading;
 pub use one_shot::OneShot;
 pub use start_of_next_line::StartOfNextLine;
 
@@ -39,7 +41,7 @@ pub trait Matcher {
     /// ```rust
     /// # use markedit::Matcher;
     /// let src = "# Heading\nsome text";
-    /// let matcher = markedit::text("some text");
+    /// let matcher = markedit::exact_text("some text");
     ///
     /// assert!(matcher.is_in(markedit::parse(src)));
     /// ```
@@ -61,6 +63,14 @@ pub trait Matcher {
         StartOfNextLine::new(self)
     }
 
+    /// Matches any header where the inner [`Matcher`] matches.
+    fn inside_any_header(self) -> Heading<Self>
+    where
+        Self: Sized,
+    {
+        Heading::any_matching(self)
+    }
+
     /// Wraps `self` in a [`Matcher`] which will only ever return `true` once.
     fn fuse(self) -> OneShot<Self>
     where
@@ -77,6 +87,14 @@ where
     fn process_next(&mut self, event: &Event<'_>) -> bool { self(event) }
 }
 
+/// A [`Matcher`] which matches everything.
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct Always;
+
+impl Matcher for Always {
+    fn process_next(&mut self, _event: &Event<'_>) -> bool { true }
+}
+
 /// Get an iterator over the indices of matching events.
 ///
 /// # Examples
@@ -84,7 +102,7 @@ where
 /// ```rust
 /// use pulldown_cmark::Event;
 ///
-/// let matcher = markedit::text("Header");
+/// let matcher = markedit::exact_text("Header");
 /// let src = "# Header\nsome text\n# Header";
 /// let events: Vec<_> = markedit::parse(src).collect();
 ///
@@ -122,8 +140,8 @@ where
 /// let src = "# Header\nnormal text\n# End";
 ///
 /// let events: Vec<_> = markedit::parse(src).collect();
-/// let start = markedit::text("Header");
-/// let end = markedit::text("End");
+/// let start = markedit::exact_text("Header");
+/// let end = markedit::exact_text("End");
 ///
 /// let got = markedit::between(start, end, &events).unwrap();
 ///
@@ -162,24 +180,21 @@ where
 /// use pulldown_cmark::Event;
 ///
 /// assert_eq!(
-///     markedit::text("Something").is_in(markedit::parse("Something")),
+///     markedit::exact_text("Something").is_in(markedit::parse("Something")),
 ///     true,
 /// );
 /// assert_eq!(
-///     markedit::text("Something").is_in(markedit::parse("Something Else")),
+///     markedit::exact_text("Something").is_in(markedit::parse("Something Else")),
 ///     false,
 /// );
 /// ```
-pub fn text<S: AsRef<str>>(needle: S) -> impl Matcher {
-    move |ev: &Event<'_>| match ev {
-        Event::Text(text) => text.as_ref() == needle.as_ref(),
-        _ => false,
-    }
+pub fn exact_text<S: AsRef<str>>(needle: S) -> impl Matcher {
+    text(move |text| AsRef::<str>::as_ref(text) == needle.as_ref())
 }
 
 /// Match an [`Event::Text`] event which *contains* the provided string.
 ///
-/// Not to be confused with [`text()`].
+/// Not to be confused with [`exact_text()`].
 ///
 /// ```rust
 /// use markedit::Matcher;
@@ -195,8 +210,16 @@ pub fn text<S: AsRef<str>>(needle: S) -> impl Matcher {
 /// );
 /// ```
 pub fn text_containing<S: AsRef<str>>(needle: S) -> impl Matcher {
+    text(move |text| text.contains(needle.as_ref()))
+}
+
+/// Match a [`Event::Text`] node using an arbitrary predicate.
+pub fn text<P>(mut predicate: P) -> impl Matcher
+where
+    P: FnMut(&str) -> bool,
+{
     move |ev: &Event<'_>| match ev {
-        Event::Text(haystack) => haystack.as_ref().contains(needle.as_ref()),
+        Event::Text(text) => predicate(text.as_ref()),
         _ => false,
     }
 }

@@ -4,7 +4,7 @@
 
 ([API Docs])
 
-A library for manipulating unstructured Markdown documents.
+An ergonomic library for manipulating unstructured Markdown documents.
 
 ## License
 

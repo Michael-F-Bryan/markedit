@@ -75,7 +75,7 @@ mod tests {
     fn match_start_of_line_after_heading() {
         let src = "# Heading \nSome Text";
         let events: Vec<_> = Parser::new(src).collect();
-        let mut matcher = StartOfNextLine::new(crate::text("Heading"));
+        let mut matcher = StartOfNextLine::new(crate::exact_text("Heading"));
 
         let got = matcher.first_match(&events).unwrap();
 

@@ -3,7 +3,7 @@ mod rewritten;
 pub use rewritten::{rewrite, Writer};
 
 use crate::Matcher;
-use pulldown_cmark::{Event, Tag};
+use pulldown_cmark::{CowStr, Event, Tag};
 
 /// Something which can rewrite events.
 pub trait Rewriter<'a> {
@@ -34,7 +34,7 @@ where
 /// use markedit::Matcher;
 /// let src = "# Heading\nsome text\n";
 ///
-/// let first_line_after_heading = markedit::text("Heading")
+/// let first_line_after_heading = markedit::exact_text("Heading")
 ///     .then_start_of_next_line();
 /// let rewriter = markedit::insert_after("## Second Heading", first_line_after_heading);
 ///
@@ -42,7 +42,7 @@ where
 /// let rewritten: Vec<_> = markedit::rewrite(events, rewriter).collect();
 ///
 /// // if everything went to plan, the output should contain "Second Heading"
-/// assert!(markedit::text("Second Heading").first_match(&rewritten).is_some());
+/// assert!(markedit::exact_text("Second Heading").first_match(&rewritten).is_some());
 /// ```
 pub fn insert_after<'src, M, S>(
     markdown_text: S,
@@ -63,6 +63,26 @@ where
             writer.extend(inserted_events.clone());
         }
         writer.push(ev);
+    }
+}
+
+/// A [`Rewriter`] which lets you update a [`Event::Text`] node based on some
+/// predicate.
+pub fn change_text<'src, M, F, S>(
+    mut predicate: M,
+    mut mutator: F,
+) -> impl Rewriter<'src> + 'src
+where
+    M: FnMut(&str) -> bool + 'src,
+    F: FnMut(CowStr<'src>) -> S + 'src,
+    S: Into<CowStr<'src>>,
+{
+    move |ev: Event<'src>, writer: &mut Writer<'src>| match ev {
+        Event::Text(text) if predicate(text.as_ref()) => {
+            let mutated = mutator(text).into();
+            writer.push(Event::Text(mutated));
+        },
+        _ => writer.push(ev),
     }
 }
 
