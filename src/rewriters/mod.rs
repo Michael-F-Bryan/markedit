@@ -78,9 +78,13 @@ where
     S: Into<CowStr<'src>>,
 {
     move |ev: Event<'src>, writer: &mut Writer<'src>| match ev {
-        Event::Text(text) if predicate(text.as_ref()) => {
-            let mutated = mutator(text).into();
-            writer.push(Event::Text(mutated));
+        Event::Text(text) => {
+            let text = if predicate(text.as_ref()) {
+                mutator(text).into()
+            } else {
+                text
+            };
+            writer.push(Event::Text(text));
         },
         _ => writer.push(ev),
     }
