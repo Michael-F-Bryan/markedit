@@ -1,1 +1,19 @@
-#![forbid(unsafe)]
+#![forbid(unsafe_code)]
+
+//! Utilities for editing unstructured markdown documents.
+
+mod matchers;
+
+pub use matchers::*;
+
+use pulldown_cmark::Event;
+
+/// Something which can be used to transform a parsed markdown document.
+pub trait Rewriter<'src> {
+    fn rewrite(&mut self, events: &mut Vec<Event<'src>>);
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct UpdateLink<M> {
+    link_content_matcher: M,
+}
