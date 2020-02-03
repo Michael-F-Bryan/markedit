@@ -163,7 +163,7 @@
     <span class="kw">fn</span> <span class="ident">match_start_of_line_after_heading</span>() {
         <span class="kw">let</span> <span class="ident">src</span> <span class="op">=</span> <span class="string">&quot;# Heading \nSome Text&quot;</span>;
         <span class="kw">let</span> <span class="ident">events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Parser</span>::<span class="ident">new</span>(<span class="ident">src</span>).<span class="ident">collect</span>();
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">matcher</span> <span class="op">=</span> <span class="ident">StartOfNextLine</span>::<span class="ident">new</span>(<span class="kw">crate</span>::<span class="ident">text</span>(<span class="string">&quot;Heading&quot;</span>));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">matcher</span> <span class="op">=</span> <span class="ident">StartOfNextLine</span>::<span class="ident">new</span>(<span class="kw">crate</span>::<span class="ident">exact_text</span>(<span class="string">&quot;Heading&quot;</span>));
 
         <span class="kw">let</span> <span class="ident">got</span> <span class="op">=</span> <span class="ident">matcher</span>.<span class="ident">first_match</span>(<span class="kw-2">&amp;</span><span class="ident">events</span>).<span class="ident">unwrap</span>();
 

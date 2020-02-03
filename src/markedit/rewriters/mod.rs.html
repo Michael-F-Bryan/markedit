@@ -107,13 +107,33 @@
 <span id="107">107</span>
 <span id="108">108</span>
 <span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">mod</span> <span class="ident">rewritten</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">rewritten</span>::{<span class="ident">rewrite</span>, <span class="ident">Writer</span>};
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Matcher</span>;
-<span class="kw">use</span> <span class="ident">pulldown_cmark</span>::{<span class="ident">Event</span>, <span class="ident">Tag</span>};
+<span class="kw">use</span> <span class="ident">pulldown_cmark</span>::{<span class="ident">CowStr</span>, <span class="ident">Event</span>, <span class="ident">Tag</span>};
 
 <span class="doccomment">/// Something which can rewrite events.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Rewriter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
@@ -144,7 +164,7 @@
 <span class="doccomment">/// use markedit::Matcher;</span>
 <span class="doccomment">/// let src = &quot;# Heading\nsome text\n&quot;;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let first_line_after_heading = markedit::text(&quot;Heading&quot;)</span>
+<span class="doccomment">/// let first_line_after_heading = markedit::exact_text(&quot;Heading&quot;)</span>
 <span class="doccomment">///     .then_start_of_next_line();</span>
 <span class="doccomment">/// let rewriter = markedit::insert_after(&quot;## Second Heading&quot;, first_line_after_heading);</span>
 <span class="doccomment">///</span>
@@ -152,7 +172,7 @@
 <span class="doccomment">/// let rewritten: Vec&lt;_&gt; = markedit::rewrite(events, rewriter).collect();</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// // if everything went to plan, the output should contain &quot;Second Heading&quot;</span>
-<span class="doccomment">/// assert!(markedit::text(&quot;Second Heading&quot;).first_match(&amp;rewritten).is_some());</span>
+<span class="doccomment">/// assert!(markedit::exact_text(&quot;Second Heading&quot;).first_match(&amp;rewritten).is_some());</span>
 <span class="doccomment">/// ```</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert_after</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span>, <span class="ident">M</span>, <span class="ident">S</span><span class="op">&gt;</span>(
     <span class="ident">markdown_text</span>: <span class="ident">S</span>,
@@ -173,6 +193,26 @@
             <span class="ident">writer</span>.<span class="ident">extend</span>(<span class="ident">inserted_events</span>.<span class="ident">clone</span>());
         }
         <span class="ident">writer</span>.<span class="ident">push</span>(<span class="ident">ev</span>);
+    }
+}
+
+<span class="doccomment">/// A [`Rewriter`] which lets you update a [`Event::Text`] node based on some</span>
+<span class="doccomment">/// predicate.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">change_text</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span>, <span class="ident">M</span>, <span class="ident">F</span>, <span class="ident">S</span><span class="op">&gt;</span>(
+    <span class="kw-2">mut</span> <span class="ident">predicate</span>: <span class="ident">M</span>,
+    <span class="kw-2">mut</span> <span class="ident">mutator</span>: <span class="ident">F</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Rewriter</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;src</span>
+<span class="kw">where</span>
+    <span class="ident">M</span>: <span class="ident">FnMut</span>(<span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> <span class="op">+</span> <span class="lifetime">&#39;src</span>,
+    <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">CowStr</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">S</span> <span class="op">+</span> <span class="lifetime">&#39;src</span>,
+    <span class="ident">S</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">CowStr</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+{
+    <span class="kw">move</span> <span class="op">|</span><span class="ident">ev</span>: <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span>, <span class="ident">writer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Writer</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">ev</span> {
+        <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">text</span>) <span class="kw">if</span> <span class="ident">predicate</span>(<span class="ident">text</span>.<span class="ident">as_ref</span>()) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="kw">let</span> <span class="ident">mutated</span> <span class="op">=</span> <span class="ident">mutator</span>(<span class="ident">text</span>).<span class="ident">into</span>();
+            <span class="ident">writer</span>.<span class="ident">push</span>(<span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">mutated</span>));
+        },
+        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">writer</span>.<span class="ident">push</span>(<span class="ident">ev</span>),
     }
 }
 

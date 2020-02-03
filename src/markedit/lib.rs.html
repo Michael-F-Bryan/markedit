@@ -17,10 +17,168 @@
 <span id="17">17</span>
 <span id="18">18</span>
 <span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="attribute">#![<span class="ident">forbid</span>(<span class="ident">unsafe_code</span>)]</span>
+<span class="doccomment">//! An ergonomic library for manipulating markdown documents.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! There are two fundamental concepts in `markedit`,</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - `Matcher` - something which can match an [`Event`] from pulldown-cmark</span>
+<span class="doccomment">//!   (typically implemented using state machines or simple functions)</span>
+<span class="doccomment">//! - `Rewriter` - something which can rewrite part of a stream of [`Event`]s</span>
+<span class="doccomment">//!   (typically just a function)</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Together we can use these to transform a stream of [`Event`]s on the fly</span>
+<span class="doccomment">//! with minimal overhead.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Examples</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The use case which prompted this entire library was to insert arbitrary</span>
+<span class="doccomment">//! markdown after a heading.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use pulldown_cmark::{Event, Tag};</span>
+<span class="doccomment">//! use markedit::{Matcher, Heading};</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let src = &quot;# Heading\n Some text\n some more text \n\n # Another Heading&quot;;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // first we need to construct our predicate</span>
+<span class="doccomment">//! let matcher = markedit::text_containing(&quot;Heading&quot;)</span>
+<span class="doccomment">//!     .inside_any_header()</span>
+<span class="doccomment">//!     .then_start_of_next_line();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // we also need a rewriting rule</span>
+<span class="doccomment">//! let rule = markedit::insert_after(&quot;## Sub-Heading&quot;, matcher);</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // create our stream of events</span>
+<span class="doccomment">//! let events = markedit::parse(src);</span>
+<span class="doccomment">//! // then mutate them and collect them into a vector so we can inspect the</span>
+<span class="doccomment">//! // results</span>
+<span class="doccomment">//! let mutated: Vec&lt;_&gt; = markedit::rewrite(events, rule).collect();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // the heading before we want to insert</span>
+<span class="doccomment">//! assert_eq!(mutated[1], Event::Text(&quot;Heading&quot;.into()));</span>
+<span class="doccomment">//! // our inserted tags</span>
+<span class="doccomment">//! assert_eq!(mutated[3], Event::Start(Tag::Heading(2)));</span>
+<span class="doccomment">//! assert_eq!(mutated[4], Event::Text(&quot;Sub-Heading&quot;.into()));</span>
+<span class="doccomment">//! assert_eq!(mutated[5], Event::End(Tag::Heading(2)));</span>
+<span class="doccomment">//! // &quot;Some text&quot; is the line after</span>
+<span class="doccomment">//! assert_eq!(mutated[7], Event::Text(&quot;Some text&quot;.into()));</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! You can also use [`change_text()`] to upper-case text based on a predicate</span>
+<span class="doccomment">//! (e.g. the text contains a certain keyword).</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```rust</span>
+<span class="doccomment">//! use pulldown_cmark::Event;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! let src = &quot;# Heading\n Some text \n some more text \n\n # Another Heading&quot;;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // first we construct the rewriting rule</span>
+<span class="doccomment">//! let rule = markedit::change_text(</span>
+<span class="doccomment">//!     |text| text.contains(&quot;Heading&quot;),</span>
+<span class="doccomment">//!     |text| text.to_uppercase(),</span>
+<span class="doccomment">//! );</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // let&#39;s parse the input text into Events</span>
+<span class="doccomment">//! let events_before: Vec&lt;_&gt; = markedit::parse(src).collect();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // some sanity checks on the initial input</span>
+<span class="doccomment">//! assert_eq!(events_before[1], Event::Text(&quot;Heading&quot;.into()));</span>
+<span class="doccomment">//! assert_eq!(events_before[9], Event::Text(&quot;Another Heading&quot;.into()));</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // now rewrite the events using our rewriter rule</span>
+<span class="doccomment">//! let events_after: Vec&lt;_&gt; = markedit::rewrite(events_before, rule)</span>
+<span class="doccomment">//!     .collect();</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! // and check the results</span>
+<span class="doccomment">//! println!(&quot;{:?}&quot;, events_after);</span>
+<span class="doccomment">//! assert_eq!(events_after[1], Event::Text(&quot;HEADING&quot;.into()));</span>
+<span class="doccomment">//! assert_eq!(events_after[9], Event::Text(&quot;ANOTHER HEADING&quot;.into()));</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Note that everything works with streaming iterators, we only needed to</span>
+<span class="doccomment">//! `collect()` the events into a `Vec` for demonstration purposes.</span>
 
-<span class="doccomment">//! Utilities for editing unstructured markdown documents.</span>
+<span class="attribute">#![<span class="ident">forbid</span>(<span class="ident">unsafe_code</span>)]</span>
 
 <span class="kw">pub</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">pulldown_cmark</span>;
 

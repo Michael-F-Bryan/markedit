@@ -4,7 +4,7 @@
 <span class="kw">use</span> <span class="ident">markedit</span>::<span class="ident">Matcher</span>;
 <span class="kw">let</span> <span class="ident">src</span> <span class="op">=</span> <span class="string">&quot;# Heading\nsome text\n&quot;</span>;
 
-<span class="kw">let</span> <span class="ident">first_line_after_heading</span> <span class="op">=</span> <span class="ident">markedit</span>::<span class="ident">text</span>(<span class="string">&quot;Heading&quot;</span>)
+<span class="kw">let</span> <span class="ident">first_line_after_heading</span> <span class="op">=</span> <span class="ident">markedit</span>::<span class="ident">exact_text</span>(<span class="string">&quot;Heading&quot;</span>)
     .<span class="ident">then_start_of_next_line</span>();
 <span class="kw">let</span> <span class="ident">rewriter</span> <span class="op">=</span> <span class="ident">markedit</span>::<span class="ident">insert_after</span>(<span class="string">&quot;## Second Heading&quot;</span>, <span class="ident">first_line_after_heading</span>);
 
@@ -12,5 +12,5 @@
 <span class="kw">let</span> <span class="ident">rewritten</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">markedit</span>::<span class="ident">rewrite</span>(<span class="ident">events</span>, <span class="ident">rewriter</span>).<span class="ident">collect</span>();
 
 <span class="comment">// if everything went to plan, the output should contain &quot;Second Heading&quot;</span>
-<span class="macro">assert</span><span class="macro">!</span>(<span class="ident">markedit</span>::<span class="ident">text</span>(<span class="string">&quot;Second Heading&quot;</span>).<span class="ident">first_match</span>(<span class="kw-2">&amp;</span><span class="ident">rewritten</span>).<span class="ident">is_some</span>());</pre></div>
+<span class="macro">assert</span><span class="macro">!</span>(<span class="ident">markedit</span>::<span class="ident">exact_text</span>(<span class="string">&quot;Second Heading&quot;</span>).<span class="ident">first_match</span>(<span class="kw-2">&amp;</span><span class="ident">rewritten</span>).<span class="ident">is_some</span>());</pre></div>
 </div></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "markedit";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
