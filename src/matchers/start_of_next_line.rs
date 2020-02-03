@@ -1,4 +1,4 @@
-use crate::matchers::{MatchOutcome, Matcher};
+use crate::matchers::Matcher;
 use pulldown_cmark::Event;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -28,14 +28,14 @@ impl<M> StartOfNextLine<M> {
 
 impl<M: Matcher> StartOfNextLine<M> {
     fn process_with_inner(&mut self, event: &Event<'_>) {
-        if self.inner.process_next(event) == MatchOutcome::Match {
+        if self.inner.process_next(event) {
             self.state = State::LookingForLastEndTag;
         }
     }
 }
 
 impl<M: Matcher> Matcher for StartOfNextLine<M> {
-    fn process_next(&mut self, event: &Event<'_>) -> MatchOutcome {
+    fn process_next(&mut self, event: &Event<'_>) -> bool {
         self.update_nesting(event);
 
         match self.state {
@@ -49,11 +49,11 @@ impl<M: Matcher> Matcher for StartOfNextLine<M> {
             },
             State::FoundLastEndTag => {
                 self.state = State::WaitingForFirstMatch;
-                return MatchOutcome::Match;
+                return true;
             },
         }
 
-        MatchOutcome::NotFound
+        false
     }
 }
 

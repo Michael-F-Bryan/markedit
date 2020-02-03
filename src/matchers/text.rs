@@ -1,4 +1,4 @@
-use crate::matchers::{MatchOutcome, Matcher};
+use crate::matchers::Matcher;
 use pulldown_cmark::Event;
 use std::borrow::Cow;
 
@@ -17,12 +17,10 @@ impl<'a> Text<'a> {
 }
 
 impl<'a> Matcher for Text<'a> {
-    fn process_next(&mut self, event: &Event<'_>) -> MatchOutcome {
+    fn process_next(&mut self, event: &Event<'_>) -> bool {
         match event {
-            Event::Text(text) if text.as_ref() == self.0.as_ref() => {
-                MatchOutcome::Match
-            },
-            _ => MatchOutcome::NotFound,
+            Event::Text(text) => text.as_ref() == self.0.as_ref(),
+            _ => false,
         }
     }
 }
@@ -38,8 +36,8 @@ mod tests {
         let events: Vec<_> = Parser::new(src).collect();
         let mut matcher = Text::literal(src);
 
-        assert_eq!(matcher.process_next(&events[0]), MatchOutcome::NotFound);
-        assert_eq!(matcher.process_next(&events[1]), MatchOutcome::Match);
-        assert_eq!(matcher.process_next(&events[2]), MatchOutcome::NotFound);
+        assert_eq!(matcher.process_next(&events[0]), false);
+        assert_eq!(matcher.process_next(&events[1]), true);
+        assert_eq!(matcher.process_next(&events[2]), false);
     }
 }

@@ -1,4 +1,4 @@
-use crate::matchers::{MatchOutcome, Matcher};
+use crate::matchers::{Matcher};
 use pulldown_cmark::Event;
 
 /// A [`Matcher`] which will only ever return a [`MatchOutcome::Match`] once.
@@ -18,14 +18,14 @@ impl<M> OneShot<M> {
 }
 
 impl<M: Matcher> Matcher for OneShot<M> {
-    fn process_next(&mut self, event: &Event<'_>) -> MatchOutcome {
+    fn process_next(&mut self, event: &Event<'_>) -> bool {
         if self.already_triggered {
-            return MatchOutcome::NotFound;
+            return false;
         }
 
         let got = self.inner.process_next(event);
 
-        if got == MatchOutcome::Match {
+        if got {
             self.already_triggered = true;
         }
 

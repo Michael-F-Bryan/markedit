@@ -14,12 +14,10 @@ use pulldown_cmark::Event;
 /// Individual [`Matcher`]s may choose to return [`MatchOutcome::Match`] more
 /// than once.
 pub trait Matcher {
-    fn process_next(&mut self, event: &Event<'_>) -> MatchOutcome;
+    fn process_next(&mut self, event: &Event<'_>) -> bool;
 
     fn first_match(&mut self, events: &[Event<'_>]) -> Option<usize> {
-        events
-            .iter()
-            .position(|ev| self.process_next(ev) == MatchOutcome::Match)
+        events.iter().position(|ev| self.process_next(ev))
     }
 
     /// Returns a [`Matcher`] which will wait until `self` matches, then return
@@ -45,21 +43,26 @@ impl<F> Matcher for F
 where
     F: FnMut(&Event<'_>) -> bool,
 {
-    fn process_next(&mut self, event: &Event<'_>) -> MatchOutcome {
-        if self(event) {
-            MatchOutcome::Match
-        } else {
-            MatchOutcome::NotFound
-        }
-    }
+    fn process_next(&mut self, event: &Event<'_>) -> bool { self(event) }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum MatchOutcome {
-    Match,
-    NotFound,
-}
-
+/// Get an iterator over the indices of matching events.
+///
+/// # Examples
+///
+/// ```rust
+/// use pulldown_cmark::Parser;
+/// use markedit::Text;
+///
+/// let matcher = Text::literal("Header");
+/// let src = "# Header\nsome text\n# Header";
+///
+/// let events: Vec<_> = Parser::new(src).collect();
+///
+/// let indices: Vec<_> = markedit::match_indices(matcher, &events).collect();
+///
+/// assert_eq!(indices, &[1, 7]);
+/// ```
 pub fn match_indices<'ev, M>(
     mut matcher: M,
     events: &'ev [Event<'ev>],
@@ -68,14 +71,33 @@ where
     M: Matcher + 'ev,
 {
     events.iter().enumerate().filter_map(move |(i, event)| {
-        match matcher.process_next(event) {
-            MatchOutcome::Match => Some(i),
-            MatchOutcome::NotFound => None,
+        if matcher.process_next(event) {
+            Some(i)
+        } else {
+            None
         }
     })
 }
 
 /// Gets all [`Event`]s between (inclusive) two matchers.
+///
+/// # Examples
+///
+/// ```rust
+/// use pulldown_cmark::{Event, Parser};
+/// use markedit::Text;
+///
+/// let src = "# Header\nnormal text\n# End";
+/// let events: Vec<_> = Parser::new(src).collect();
+/// let start = Text::literal("Header");
+/// let end = Text::literal("End");
+///
+/// let got = markedit::between(start, end, &events).unwrap();
+///
+/// assert_eq!(got.first().unwrap(), &Event::Text("Header".into()));
+/// assert_eq!(got.last().unwrap(), &Event::Text("End".into()));
+/// assert_eq!(got.len(), 7);
+/// ```
 pub fn between<'ev, S, E>(
     start: S,
     mut end: E,
@@ -96,24 +118,4 @@ where
     }
 
     None
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use pulldown_cmark::Parser;
-
-    #[test]
-    fn get_events_between_headers() {
-        let src = "# Header\nnormal text\n# End";
-        let events: Vec<_> = Parser::new(src).collect();
-        let start = Text::literal("Header");
-        let end = Text::literal("End");
-
-        let got = between(start, end, &events).unwrap();
-
-        assert_eq!(got.first().unwrap(), &Event::Text("Header".into()));
-        assert_eq!(got.last().unwrap(), &Event::Text("End".into()));
-        assert_eq!(got.len(), 7);
-    }
 }
