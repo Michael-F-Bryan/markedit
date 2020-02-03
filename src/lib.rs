@@ -12,6 +12,8 @@ pub use rewriters::*;
 
 use pulldown_cmark::{Event, Parser};
 
-pub fn parse_events(text: &str) -> impl Iterator<Item = Event<'_>> + '_ {
+/// A convenience function for parsing some text into [`Event`]s without
+/// needing to add [`pulldown_cmark`] as an explicit dependency.
+pub fn parse(text: &str) -> impl Iterator<Item = Event<'_>> + '_ {
     Parser::new(text)
 }

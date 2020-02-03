@@ -1,6 +1,8 @@
 use crate::matchers::Matcher;
 use pulldown_cmark::Event;
 
+/// A [`Matcher`] which will match the start of the next top-level element after
+/// some inner [`Matcher`] matches.
 #[derive(Debug, Clone, PartialEq)]
 pub struct StartOfNextLine<M> {
     inner: M,

@@ -41,7 +41,7 @@ pub trait Matcher {
     /// let src = "# Heading\nsome text";
     /// let matcher = markedit::text("some text");
     ///
-    /// assert!(matcher.is_in(markedit::parse_events(src)));
+    /// assert!(matcher.is_in(markedit::parse(src)));
     /// ```
     fn is_in<'src, I, E>(mut self, events: I) -> bool
     where
@@ -49,9 +49,7 @@ pub trait Matcher {
         E: Borrow<Event<'src>>,
         Self: Sized,
     {
-        events
-            .into_iter()
-            .any(|ev| self.process_next(ev.borrow()))
+        events.into_iter().any(|ev| self.process_next(ev.borrow()))
     }
 
     /// Returns a [`Matcher`] which will wait until `self` matches, then return
@@ -88,7 +86,7 @@ where
 ///
 /// let matcher = markedit::text("Header");
 /// let src = "# Header\nsome text\n# Header";
-/// let events: Vec<_> = markedit::parse_events(src).collect();
+/// let events: Vec<_> = markedit::parse(src).collect();
 ///
 /// let indices: Vec<_> = markedit::match_indices(matcher, &events).collect();
 ///
@@ -123,7 +121,7 @@ where
 ///
 /// let src = "# Header\nnormal text\n# End";
 ///
-/// let events: Vec<_> = markedit::parse_events(src).collect();
+/// let events: Vec<_> = markedit::parse(src).collect();
 /// let start = markedit::text("Header");
 /// let end = markedit::text("End");
 ///
@@ -155,6 +153,47 @@ where
     None
 }
 
+/// Match an [`Event::Text`] event with this *exact* text.
+///
+/// Not to be confused with [`text_containing()`].
+///
+/// ```rust
+/// use markedit::Matcher;
+/// use pulldown_cmark::Event;
+///
+/// assert_eq!(
+///     markedit::text("Something").is_in(markedit::parse("Something")),
+///     true,
+/// );
+/// assert_eq!(
+///     markedit::text("Something").is_in(markedit::parse("Something Else")),
+///     false,
+/// );
+/// ```
+pub fn text<S: AsRef<str>>(needle: S) -> impl Matcher {
+    move |ev: &Event<'_>| match ev {
+        Event::Text(text) => text.as_ref() == needle.as_ref(),
+        _ => false,
+    }
+}
+
+/// Match an [`Event::Text`] event which *contains* the provided string.
+///
+/// Not to be confused with [`text()`].
+///
+/// ```rust
+/// use markedit::Matcher;
+/// use pulldown_cmark::Event;
+///
+/// assert_eq!(
+///     markedit::text_containing("Something").is_in(markedit::parse("Something")),
+///     true,
+/// );
+/// assert_eq!(
+///     markedit::text_containing("Something").is_in(markedit::parse("Something Else")),
+///     true,
+/// );
+/// ```
 pub fn text_containing<S: AsRef<str>>(needle: S) -> impl Matcher {
     move |ev: &Event<'_>| match ev {
         Event::Text(haystack) => haystack.as_ref().contains(needle.as_ref()),
@@ -173,7 +212,7 @@ pub fn text_containing<S: AsRef<str>>(needle: S) -> impl Matcher {
 /// let src = "Some text containing [a link to google](https://google.com/).";
 /// let mut matcher = markedit::link_with_url_containing("google.com");
 ///
-/// let events: Vec<_> = markedit::parse_events(src).collect();
+/// let events: Vec<_> = markedit::parse(src).collect();
 ///
 /// let ix = matcher.first_match(&events).unwrap();
 ///
@@ -187,13 +226,6 @@ pub fn link_with_url_containing<S: AsRef<str>>(needle: S) -> impl Matcher {
         Event::Start(Tag::Link(_, link, _)) => {
             link.as_ref().contains(needle.as_ref())
         },
-        _ => false,
-    }
-}
-
-pub fn text<S: AsRef<str>>(needle: S) -> impl Matcher {
-    move |ev: &Event<'_>| match ev {
-        Event::Text(text) => text.as_ref() == needle.as_ref(),
         _ => false,
     }
 }

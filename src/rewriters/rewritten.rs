@@ -52,6 +52,7 @@ where
     }
 }
 
+/// The output buffer used when [`rewrite()`] calls [`Rewriter::rewrite()`].
 #[derive(Debug)]
 pub struct Writer<'a> {
     buffer: VecDeque<Event<'a>>,

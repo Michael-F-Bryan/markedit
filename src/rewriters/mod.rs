@@ -38,7 +38,7 @@ where
 ///     .then_start_of_next_line();
 /// let rewriter = markedit::insert_after("## Second Heading", first_line_after_heading);
 ///
-/// let events = markedit::parse_events(src);
+/// let events = markedit::parse(src);
 /// let rewritten: Vec<_> = markedit::rewrite(events, rewriter).collect();
 ///
 /// // if everything went to plan, the output should contain "Second Heading"
@@ -54,7 +54,7 @@ where
 {
     let mut matcher = matcher;
     let inserted_events: Vec<Event<'static>> =
-        crate::parse_events(markdown_text.as_ref())
+        crate::parse(markdown_text.as_ref())
             .map(owned_event)
             .collect();
 
