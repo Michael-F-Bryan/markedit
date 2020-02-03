@@ -5,6 +5,12 @@ authors = ["Michael Bryan <michaelfbryan@gmail.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2018"
 description = "An ergonomic library for manipulating unstructured Markdown documents."
+repository = "https://github.com/Michael-F-Bryan/markedit"
+keywords = ["markdown", "streaming", "edit"]
+categories = ["text-processing"]
 
 [dependencies]
 pulldown-cmark = "0.6.1"
+
+[badges]
+travis-ci = { repository = "Michael-F-Bryan/markedit", branch = "master" }
