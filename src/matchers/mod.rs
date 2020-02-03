@@ -1,27 +1,37 @@
 mod one_shot;
 mod start_of_next_line;
-mod text;
 
 pub use one_shot::OneShot;
 pub use start_of_next_line::StartOfNextLine;
-pub use text::Text;
 
-use pulldown_cmark::Event;
+use pulldown_cmark::{Event, Tag};
 
-/// A predicate which can be fed a stream of [`Event<'_>`]s and tell you whether
+/// A predicate which can be fed a stream of [`Event`]s and tell you whether
 /// they match a desired condition.
 ///
-/// Individual [`Matcher`]s may choose to return [`MatchOutcome::Match`] more
-/// than once.
+/// Individual [`Matcher`]s may choose to return `true` more than once.
+///
+/// Any function which accepts a [`Event`] reference and returns a `bool` can be
+/// used as a [`Matcher`].
+///
+/// ```rust
+/// # use markedit::Matcher;
+/// # use pulldown_cmark::Event;
+/// fn assert_is_matcher(_: impl Matcher) {}
+///
+/// assert_is_matcher(|ev: &Event<'_>| true);
+/// ```
 pub trait Matcher {
     fn process_next(&mut self, event: &Event<'_>) -> bool;
 
+    /// Find the index of the first [`Event`] which is matched by this
+    /// predicate.
     fn first_match(&mut self, events: &[Event<'_>]) -> Option<usize> {
         events.iter().position(|ev| self.process_next(ev))
     }
 
     /// Returns a [`Matcher`] which will wait until `self` matches, then return
-    /// [`MatchOutcome::Match`] at the start of the next top-level element.
+    /// `true` at the start of the next top-level element.
     fn then_start_of_next_line(self) -> StartOfNextLine<Self>
     where
         Self: Sized,
@@ -29,8 +39,7 @@ pub trait Matcher {
         StartOfNextLine::new(self)
     }
 
-    /// Wraps `self` in a [`Matcher`] which will only ever return
-    /// [`MatchOutcome::Match`] once.
+    /// Wraps `self` in a [`Matcher`] which will only ever return `true` once.
     fn fuse(self) -> OneShot<Self>
     where
         Self: Sized,
@@ -51,17 +60,19 @@ where
 /// # Examples
 ///
 /// ```rust
-/// use pulldown_cmark::Parser;
-/// use markedit::Text;
+/// use pulldown_cmark::Event;
 ///
-/// let matcher = Text::literal("Header");
+/// let matcher = markedit::text("Header");
 /// let src = "# Header\nsome text\n# Header";
-///
-/// let events: Vec<_> = Parser::new(src).collect();
+/// let events: Vec<_> = markedit::parse_events(src).collect();
 ///
 /// let indices: Vec<_> = markedit::match_indices(matcher, &events).collect();
 ///
-/// assert_eq!(indices, &[1, 7]);
+/// assert_eq!(indices.len(), 2);
+///
+/// for ix in indices {
+///     assert_eq!(events[ix], Event::Text("Header".into()));
+/// }
 /// ```
 pub fn match_indices<'ev, M>(
     mut matcher: M,
@@ -84,13 +95,13 @@ where
 /// # Examples
 ///
 /// ```rust
-/// use pulldown_cmark::{Event, Parser};
-/// use markedit::Text;
+/// use pulldown_cmark::Event;
 ///
 /// let src = "# Header\nnormal text\n# End";
-/// let events: Vec<_> = Parser::new(src).collect();
-/// let start = Text::literal("Header");
-/// let end = Text::literal("End");
+///
+/// let events: Vec<_> = markedit::parse_events(src).collect();
+/// let start = markedit::text("Header");
+/// let end = markedit::text("End");
 ///
 /// let got = markedit::between(start, end, &events).unwrap();
 ///
@@ -118,4 +129,47 @@ where
     }
 
     None
+}
+
+pub fn text_containing<S: AsRef<str>>(needle: S) -> impl Matcher {
+    move |ev: &Event<'_>| match ev {
+        Event::Text(haystack) => haystack.as_ref().contains(needle.as_ref()),
+        _ => false,
+    }
+}
+
+/// Matches the start of a link who's URL contains a certain string.
+///
+/// # Examples
+///
+/// ```rust
+/// # use markedit::Matcher;
+/// use pulldown_cmark::{Event, Tag};
+///
+/// let src = "Some text containing [a link to google](https://google.com/).";
+/// let mut matcher = markedit::link_with_url_containing("google.com");
+///
+/// let events: Vec<_> = markedit::parse_events(src).collect();
+///
+/// let ix = matcher.first_match(&events).unwrap();
+///
+/// match &events[ix] {
+///     Event::Start(Tag::Link(_, url, _)) => assert_eq!(url.as_ref(), "https://google.com/"),
+///     _ => unreachable!(),
+/// }
+/// ```
+pub fn link_with_url_containing<S: AsRef<str>>(needle: S) -> impl Matcher {
+    move |ev: &Event<'_>| match ev {
+        Event::Start(Tag::Link(_, link, _)) => {
+            link.as_ref().contains(needle.as_ref())
+        },
+        _ => false,
+    }
+}
+
+pub fn text<S: AsRef<str>>(needle: S) -> impl Matcher {
+    move |ev: &Event<'_>| match ev {
+        Event::Text(text) => text.as_ref() == needle.as_ref(),
+        _ => false,
+    }
 }

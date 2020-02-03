@@ -67,14 +67,13 @@ enum State {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::matchers::Text;
     use pulldown_cmark::Parser;
 
     #[test]
     fn match_start_of_line_after_heading() {
         let src = "# Heading \nSome Text";
         let events: Vec<_> = Parser::new(src).collect();
-        let mut matcher = StartOfNextLine::new(Text::literal("Heading"));
+        let mut matcher = StartOfNextLine::new(crate::text("Heading"));
 
         let got = matcher.first_match(&events).unwrap();
 

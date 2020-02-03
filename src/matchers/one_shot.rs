@@ -1,7 +1,7 @@
-use crate::matchers::{Matcher};
+use crate::matchers::Matcher;
 use pulldown_cmark::Event;
 
-/// A [`Matcher`] which will only ever return a [`MatchOutcome::Match`] once.
+/// A [`Matcher`] which will only ever return `true` once.
 #[derive(Debug, Clone, PartialEq)]
 pub struct OneShot<M> {
     inner: M,

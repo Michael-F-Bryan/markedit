@@ -2,11 +2,17 @@
 
 //! Utilities for editing unstructured markdown documents.
 
+pub extern crate pulldown_cmark;
+
 mod matchers;
 
 pub use matchers::*;
 
-use pulldown_cmark::Event;
+use pulldown_cmark::{Event, Parser};
+
+pub fn parse_events(text: &str) -> impl Iterator<Item = Event<'_>> + '_ {
+    Parser::new(text)
+}
 
 /// Something which can be used to transform a parsed markdown document.
 pub trait Rewriter<'src> {
