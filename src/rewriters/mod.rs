@@ -36,7 +36,7 @@ where
     }
 }
 
-/// Inserts some markdown text after whatever is matched by the [`Matcher`].
+/// Inserts some markdown text before whatever is matched by the [`Matcher`].
 ///
 /// # Examples
 ///
@@ -45,16 +45,19 @@ where
 /// let src = "# Heading\nsome text\n";
 ///
 /// let first_line_after_heading = markedit::exact_text("Heading")
-///     .then_start_of_next_line();
-/// let rewriter = markedit::insert_after("## Second Heading", first_line_after_heading);
+///     .falling_edge();
+/// let rewriter = markedit::insert_markdown_before(
+///     "## Second Heading",
+///     first_line_after_heading,
+/// );
 ///
 /// let events = markedit::parse(src);
 /// let rewritten: Vec<_> = markedit::rewrite(events, rewriter).collect();
 ///
 /// // if everything went to plan, the output should contain "Second Heading"
-/// assert!(markedit::exact_text("Second Heading").first_match(&rewritten).is_some());
+/// assert!(markedit::exact_text("Second Heading").is_in(&rewritten));
 /// ```
-pub fn insert_after<'src, M, S>(
+pub fn insert_markdown_before<'src, M, S>(
     markdown_text: S,
     matcher: M,
 ) -> impl Rewriter<'src> + 'src
@@ -62,15 +65,23 @@ where
     M: Matcher + 'src,
     S: AsRef<str> + 'src,
 {
-    let mut matcher = matcher;
-    let inserted_events: Vec<Event<'static>> =
-        crate::parse(markdown_text.as_ref())
-            .map(owned_event)
-            .collect();
+    let events = crate::parse(markdown_text.as_ref())
+        .map(owned_event)
+        .collect();
+    insert_before(events, matcher)
+}
 
+/// Splice some events into the resulting event stream before every match.
+pub fn insert_before<'src, M>(
+    to_insert: Vec<Event<'src>>,
+    mut matcher: M,
+) -> impl Rewriter<'src> + 'src
+where
+    M: Matcher + 'src,
+{
     move |ev: Event<'src>, writer: &mut Writer<'src>| {
         if matcher.process_next(&ev) {
-            writer.extend(inserted_events.clone());
+            writer.extend(to_insert.iter().cloned());
         }
         writer.push(ev);
     }
@@ -100,15 +111,15 @@ where
     }
 }
 
-fn owned_event(ev: Event<'_>) -> Event<'static> {
+pub fn owned_event(ev: Event<'_>) -> Event<'static> {
     match ev {
         Event::Start(tag) => Event::Start(owned_tag(tag)),
         Event::End(tag) => Event::End(owned_tag(tag)),
-        Event::Text(s) => Event::Text(s.into_string().into()),
-        Event::Code(s) => Event::Text(s.into_string().into()),
-        Event::Html(s) => Event::Text(s.into_string().into()),
+        Event::Text(s) => Event::Text(owned_cow_str(s)),
+        Event::Code(s) => Event::Text(owned_cow_str(s)),
+        Event::Html(s) => Event::Text(owned_cow_str(s)),
         Event::FootnoteReference(s) => {
-            Event::FootnoteReference(s.into_string().into())
+            Event::FootnoteReference(owned_cow_str(s))
         },
         Event::SoftBreak => Event::SoftBreak,
         Event::HardBreak => Event::HardBreak,
@@ -117,15 +128,23 @@ fn owned_event(ev: Event<'_>) -> Event<'static> {
     }
 }
 
+fn owned_cow_str(s: CowStr<'_>) -> CowStr<'static> {
+    match s {
+        CowStr::Borrowed(_) => CowStr::from(s.into_string()),
+        CowStr::Boxed(boxed) => CowStr::Boxed(boxed),
+        CowStr::Inlined(inlined) => CowStr::Inlined(inlined),
+    }
+}
+
 fn owned_tag(tag: Tag<'_>) -> Tag<'static> {
     match tag {
         Tag::Paragraph => Tag::Paragraph,
         Tag::Heading(h) => Tag::Heading(h),
         Tag::BlockQuote => Tag::BlockQuote,
-        Tag::CodeBlock(s) => Tag::CodeBlock(s.into_string().into()),
+        Tag::CodeBlock(s) => Tag::CodeBlock(owned_cow_str(s)),
         Tag::List(u) => Tag::List(u),
         Tag::Item => Tag::Item,
-        Tag::FootnoteDefinition(s) => Tag::CodeBlock(s.into_string().into()),
+        Tag::FootnoteDefinition(s) => Tag::CodeBlock(owned_cow_str(s)),
         Tag::Table(alignment) => Tag::Table(alignment),
         Tag::TableHead => Tag::TableHead,
         Tag::TableRow => Tag::TableRow,
@@ -134,10 +153,10 @@ fn owned_tag(tag: Tag<'_>) -> Tag<'static> {
         Tag::Strong => Tag::Strong,
         Tag::Strikethrough => Tag::Strikethrough,
         Tag::Link(t, url, title) => {
-            Tag::Link(t, url.into_string().into(), title.into_string().into())
+            Tag::Link(t, owned_cow_str(url), owned_cow_str(title))
         },
         Tag::Image(t, url, alt) => {
-            Tag::Image(t, url.into_string().into(), alt.into_string().into())
+            Tag::Image(t, owned_cow_str(url), owned_cow_str(alt))
         },
     }
 }

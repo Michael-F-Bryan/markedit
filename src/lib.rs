@@ -25,7 +25,7 @@
 //! let matcher = Heading::with_level(1).falling_edge();
 //!
 //! // we also need a rewriting rule
-//! let rule = markedit::insert_after("## Sub-Heading", matcher);
+//! let rule = markedit::insert_markdown_before("## Sub-Heading", matcher);
 //!
 //! // create our stream of events
 //! let events = markedit::parse(src);
