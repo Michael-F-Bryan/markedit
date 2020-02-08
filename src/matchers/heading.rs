@@ -1,32 +1,27 @@
-use crate::matchers::{Always, Matcher};
+use crate::matchers::Matcher;
 use pulldown_cmark::{Event, Tag};
 
-/// Matches the start of a heading.
+/// Matches the items inside a heading tag, including the start and end tags.
 #[derive(Debug, Clone, PartialEq)]
-pub struct Heading<M> {
-    inner: M,
-    state: State,
+pub struct Heading {
+    inside_heading: bool,
     level: Option<u32>,
 }
 
-impl Heading<Always> {
-    /// Matches any heading.
-    pub const fn any() -> Self { Heading::new(None, Always) }
-
-    /// Matches only headings with the desired level.
-    pub const fn with_level(level: u32) -> Self {
-        Heading::new(Some(level), Always)
-    }
-}
-
-impl<M> Heading<M> {
-    pub const fn new(level: Option<u32>, inner: M) -> Self {
+impl Heading {
+    /// Create a new [`Heading`].
+    const fn new(level: Option<u32>) -> Self {
         Heading {
-            inner,
             level,
-            state: State::WaitingForHeading,
+            inside_heading: false,
         }
     }
+
+    /// Matches any heading.
+    pub const fn any_level() -> Self { Heading::new(None) }
+
+    /// Matches only headings with the desired level.
+    pub const fn with_level(level: u32) -> Self { Heading::new(Some(level)) }
 
     fn matches_level(&self, level: u32) -> bool {
         match self.level {
@@ -36,31 +31,74 @@ impl<M> Heading<M> {
     }
 }
 
-impl<M: Matcher> Heading<M> {
-    /// Matches any header where the inner [`Matcher`] matches.
-    pub fn any_matching(inner: M) -> Self { Heading::new(None, inner) }
-}
-
-impl<M: Matcher> Matcher for Heading<M> {
+impl Matcher for Heading {
     fn process_next(&mut self, event: &Event<'_>) -> bool {
-        match (event, &self.state) {
-            (Event::Start(Tag::Heading(level)), State::WaitingForHeading) => {
-                if self.matches_level(*level) {
-                    self.state = State::InsideHeading;
-                }
+        match event {
+            Event::Start(Tag::Heading(level)) if self.matches_level(*level) => {
+                self.inside_heading = true;
             },
-            (_, State::InsideHeading) => {
-                return self.inner.process_next(event);
+            Event::End(Tag::Heading(level)) if self.matches_level(*level) => {
+                self.inside_heading = false;
+                // make sure the end tag is also matched
+                return true;
             },
             _ => {},
         }
 
-        false
+        self.inside_heading
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-enum State {
-    WaitingForHeading,
-    InsideHeading,
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pulldown_cmark::LinkType;
+
+    #[test]
+    fn match_everything_inside_a_header() {
+        // The original text for these events was:
+        //
+        // This is some text.
+        //
+        // ## Then a *header*
+        //
+        // [And a link](https://example.com)
+        let inputs = vec![
+            (Event::Start(Tag::Paragraph), false),
+            (Event::Text("This is some text.".into()), false),
+            (Event::End(Tag::Paragraph), false),
+            (Event::Start(Tag::Heading(2)), true),
+            (Event::Text("Then a ".into()), true),
+            (Event::Start(Tag::Emphasis), true),
+            (Event::Text("header".into()), true),
+            (Event::End(Tag::Emphasis), true),
+            (Event::End(Tag::Heading(2)), true),
+            (Event::Start(Tag::Paragraph), false),
+            (
+                Event::Start(Tag::Link(
+                    LinkType::Inline,
+                    "https://example.com".into(),
+                    "".into(),
+                )),
+                false,
+            ),
+            (Event::Text("And a link".into()), false),
+            (
+                Event::End(Tag::Link(
+                    LinkType::Inline,
+                    "https://example.com".into(),
+                    "".into(),
+                )),
+                false,
+            ),
+            (Event::End(Tag::Paragraph), false),
+        ];
+
+        let mut matcher = Heading::any_level();
+
+        for (tag, should_be) in inputs {
+            let got = matcher.process_next(&tag);
+            assert_eq!(got, should_be, "{:?}", tag);
+        }
+    }
 }

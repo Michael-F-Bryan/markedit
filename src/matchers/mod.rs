@@ -63,14 +63,6 @@ pub trait Matcher {
         StartOfNextLine::new(self)
     }
 
-    /// Matches any header where the inner [`Matcher`] matches.
-    fn inside_any_header(self) -> Heading<Self>
-    where
-        Self: Sized,
-    {
-        Heading::any_matching(self)
-    }
-
     /// Wraps `self` in a [`Matcher`] which will only ever return `true` once.
     fn fuse(self) -> OneShot<Self>
     where
