@@ -1,6 +1,5 @@
-use crate::Rewriter;
+use crate::{Rewriter, Writer};
 use pulldown_cmark::Event;
-use std::collections::VecDeque;
 
 /// The whole point.
 ///
@@ -15,20 +14,24 @@ where
     E::IntoIter: 'src,
     R: Rewriter<'src> + 'src,
 {
-    Rewritten {
-        rewriter,
-        events: events.into_iter(),
-        writer: Writer::new(),
-    }
+    Rewritten::new(events.into_iter(), rewriter)
 }
 
-struct Rewritten<'src, E, R>
-where
-    E: Iterator<Item = Event<'src>>,
-{
+/// A stream of [`Event`]s that have been modified by a [`Rewriter`].
+pub struct Rewritten<'src, E, R> {
     events: E,
     rewriter: R,
     writer: Writer<'src>,
+}
+
+impl<'src, E, R> Rewritten<'src, E, R> {
+    pub fn new(events: E, rewriter: R) -> Self {
+    Rewritten {
+        rewriter,
+        events: events,
+        writer: Writer::new(),
+    }
+    }
 }
 
 impl<'src, E, R> Iterator for Rewritten<'src, E, R>
@@ -46,30 +49,8 @@ where
 
         // we need to pop another event and process it
         let event = self.events.next()?;
-        self.rewriter.rewrite(event, &mut self.writer);
+        self.rewriter.rewrite_event(event, &mut self.writer);
 
         self.writer.buffer.pop_front()
-    }
-}
-
-/// The output buffer used when [`rewrite()`] calls [`Rewriter::rewrite()`].
-#[derive(Debug)]
-pub struct Writer<'a> {
-    buffer: VecDeque<Event<'a>>,
-}
-
-impl<'a> Writer<'a> {
-    fn new() -> Writer<'a> {
-        Writer {
-            buffer: VecDeque::new(),
-        }
-    }
-
-    pub fn push(&mut self, event: Event<'a>) { self.buffer.push_back(event); }
-}
-
-impl<'a> Extend<Event<'a>> for Writer<'a> {
-    fn extend<I: IntoIterator<Item = Event<'a>>>(&mut self, iter: I) {
-        self.buffer.extend(iter);
     }
 }

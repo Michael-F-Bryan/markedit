@@ -1,12 +1,14 @@
 mod rewritten;
+mod writer;
 
-pub use rewritten::{rewrite, Writer};
+pub use rewritten::{rewrite, Rewritten};
+pub use writer::Writer;
 
 use crate::Matcher;
 use pulldown_cmark::{CowStr, Event, Tag};
 
 /// Something which can rewrite events.
-pub trait Rewriter<'a> {
+pub trait Rewriter<'src> {
     /// Process a single [`Event`].
     ///
     /// This may mean ignoring it, mutating it, or adding new events to the
@@ -14,14 +16,22 @@ pub trait Rewriter<'a> {
     ///
     /// The [`Writer`] is used as a temporary buffer that will then be streamed
     /// to the user via [`rewrite()`].
-    fn rewrite(&mut self, event: Event<'a>, writer: &mut Writer<'a>);
+    fn rewrite_event(&mut self, event: Event<'src>, writer: &mut Writer<'src>);
+
+    fn rewrite<E>(self, events: E) -> Rewritten<'src, E, Self>
+    where
+        Self: Sized,
+        E: IntoIterator<Item = Event<'src>>,
+    {
+        Rewritten::new(events, self)
+    }
 }
 
-impl<'a, F> Rewriter<'a> for F
+impl<'src, F> Rewriter<'src> for F
 where
-    F: FnMut(Event<'a>, &mut Writer<'a>),
+    F: FnMut(Event<'src>, &mut Writer<'src>),
 {
-    fn rewrite(&mut self, event: Event<'a>, writer: &mut Writer<'a>) {
+    fn rewrite_event(&mut self, event: Event<'src>, writer: &mut Writer<'src>) {
         self(event, writer);
     }
 }
