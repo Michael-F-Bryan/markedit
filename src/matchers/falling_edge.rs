@@ -12,13 +12,13 @@ use pulldown_cmark::Event;
 /// let mut matcher = FallingEdge::new(matches_something);
 ///
 /// // enter the paragraph
-/// let got = matcher.process_next(&Event::Start(Tag::Paragraph));
+/// let got = matcher.matches_event(&Event::Start(Tag::Paragraph));
 /// assert_eq!(got, false);
 /// // then encounter some text. matches_something should have gone from false -> true
-/// let got = matcher.process_next(&Event::Text("Something".into()));
+/// let got = matcher.matches_event(&Event::Text("Something".into()));
 /// assert_eq!(got, false);
 /// // then leave the paragraph. `matches_something` should go from true -> false
-/// let got = matcher.process_next(&Event::End(Tag::Paragraph));
+/// let got = matcher.matches_event(&Event::End(Tag::Paragraph));
 /// assert_eq!(got, true, "We've entered a paragraph");
 /// ```
 #[derive(Debug, Clone, PartialEq)]
@@ -37,8 +37,8 @@ impl<M> FallingEdge<M> {
 }
 
 impl<M: Matcher> Matcher for FallingEdge<M> {
-    fn process_next(&mut self, event: &Event<'_>) -> bool {
-        let current_is_matched = self.inner.process_next(event);
+    fn matches_event(&mut self, event: &Event<'_>) -> bool {
+        let current_is_matched = self.inner.matches_event(event);
         let is_falling_edge = self.previous_was_matched && !current_is_matched;
         self.previous_was_matched = current_is_matched;
         is_falling_edge

@@ -80,7 +80,7 @@ where
     M: Matcher + 'src,
 {
     move |ev: Event<'src>, writer: &mut Writer<'src>| {
-        if matcher.process_next(&ev) {
+        if matcher.matches_event(&ev) {
             writer.extend(to_insert.iter().cloned());
         }
         writer.push(ev);

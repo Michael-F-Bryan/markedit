@@ -18,12 +18,12 @@ impl<M> OneShot<M> {
 }
 
 impl<M: Matcher> Matcher for OneShot<M> {
-    fn process_next(&mut self, event: &Event<'_>) -> bool {
+    fn matches_event(&mut self, event: &Event<'_>) -> bool {
         if self.already_triggered {
             return false;
         }
 
-        let got = self.inner.process_next(event);
+        let got = self.inner.matches_event(event);
 
         if got {
             self.already_triggered = true;

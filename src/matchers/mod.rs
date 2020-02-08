@@ -29,12 +29,12 @@ use std::borrow::Borrow;
 /// assert_is_matcher(|ev: &Event<'_>| true);
 /// ```
 pub trait Matcher {
-    fn process_next(&mut self, event: &Event<'_>) -> bool;
+    fn matches_event(&mut self, event: &Event<'_>) -> bool;
 
     /// Find the index of the first [`Event`] which is matched by this
     /// predicate.
     fn first_match(&mut self, events: &[Event<'_>]) -> Option<usize> {
-        events.iter().position(|ev| self.process_next(ev))
+        events.iter().position(|ev| self.matches_event(ev))
     }
 
     /// Checks whether this [`Matcher`] would match anything in a stream of
@@ -55,7 +55,7 @@ pub trait Matcher {
         E: Borrow<Event<'src>>,
         Self: Sized,
     {
-        events.into_iter().any(|ev| self.process_next(ev.borrow()))
+        events.into_iter().any(|ev| self.matches_event(ev.borrow()))
     }
 
     /// Returns a [`Matcher`] which will wait until `self` matches, then return
@@ -85,8 +85,9 @@ pub trait Matcher {
     }
 
     fn and<M>(self, other: M) -> And<Self, M>
-    where Self: Sized,
-    M: Matcher,
+    where
+        Self: Sized,
+        M: Matcher,
     {
         And::new(self, other)
     }
@@ -96,7 +97,7 @@ impl<F> Matcher for F
 where
     F: FnMut(&Event<'_>) -> bool,
 {
-    fn process_next(&mut self, event: &Event<'_>) -> bool { self(event) }
+    fn matches_event(&mut self, event: &Event<'_>) -> bool { self(event) }
 }
 
 /// A [`Matcher`] which matches everything.
@@ -104,7 +105,7 @@ where
 pub struct Always;
 
 impl Matcher for Always {
-    fn process_next(&mut self, _event: &Event<'_>) -> bool { true }
+    fn matches_event(&mut self, _event: &Event<'_>) -> bool { true }
 }
 
 /// Get an iterator over the indices of matching events.
@@ -134,7 +135,7 @@ where
     M: Matcher + 'ev,
 {
     events.iter().enumerate().filter_map(move |(i, event)| {
-        if matcher.process_next(event) {
+        if matcher.matches_event(event) {
             Some(i)
         } else {
             None

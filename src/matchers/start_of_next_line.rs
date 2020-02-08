@@ -30,14 +30,14 @@ impl<M> StartOfNextLine<M> {
 
 impl<M: Matcher> StartOfNextLine<M> {
     fn process_with_inner(&mut self, event: &Event<'_>) {
-        if self.inner.process_next(event) {
+        if self.inner.matches_event(event) {
             self.state = State::LookingForLastEndTag;
         }
     }
 }
 
 impl<M: Matcher> Matcher for StartOfNextLine<M> {
-    fn process_next(&mut self, event: &Event<'_>) -> bool {
+    fn matches_event(&mut self, event: &Event<'_>) -> bool {
         self.update_nesting(event);
 
         match self.state {

@@ -32,7 +32,7 @@ impl Heading {
 }
 
 impl Matcher for Heading {
-    fn process_next(&mut self, event: &Event<'_>) -> bool {
+    fn matches_event(&mut self, event: &Event<'_>) -> bool {
         match event {
             Event::Start(Tag::Heading(level)) if self.matches_level(*level) => {
                 self.inside_heading = true;
@@ -97,7 +97,7 @@ mod tests {
         let mut matcher = Heading::any_level();
 
         for (tag, should_be) in inputs {
-            let got = matcher.process_next(&tag);
+            let got = matcher.matches_event(&tag);
             assert_eq!(got, should_be, "{:?}", tag);
         }
     }
