@@ -85,6 +85,7 @@
 <span id="85">85</span>
 <span id="86">86</span>
 <span id="87">87</span>
+<span id="88">88</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">matchers</span>::<span class="ident">Matcher</span>;
 <span class="kw">use</span> <span class="ident">pulldown_cmark</span>::<span class="ident">Event</span>;
@@ -99,6 +100,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">M</span><span class="op">&gt;</span> <span class="ident">StartOfNextLine</span><span class="op">&lt;</span><span class="ident">M</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Create a new [`StartOfNextLine`] matcher.</span>
     <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">inner</span>: <span class="ident">M</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="ident">StartOfNextLine</span> {
             <span class="ident">inner</span>,

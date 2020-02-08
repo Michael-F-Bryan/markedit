@@ -265,6 +265,7 @@
 <span id="265">265</span>
 <span id="266">266</span>
 <span id="267">267</span>
+<span id="268">268</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">mod</span> <span class="ident">and</span>;
 <span class="kw">mod</span> <span class="ident">falling_edge</span>;
@@ -297,6 +298,7 @@
 <span class="doccomment">/// assert_is_matcher(|ev: &amp;Event&lt;&#39;_&gt;| true);</span>
 <span class="doccomment">/// ```</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Matcher</span> {
+    <span class="doccomment">/// Evaluate this predicate against an event from an [`Event`] stream.</span>
     <span class="kw">fn</span> <span class="ident">matches_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="kw-2">&amp;</span><span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span>;
 
     <span class="doccomment">/// Find the index of the first [`Event`] which is matched by this</span>
@@ -352,6 +354,7 @@
         <span class="ident">FallingEdge</span>::<span class="ident">new</span>(<span class="self">self</span>)
     }
 
+    <span class="doccomment">/// Get a [`Matcher`] which matches when `self` and `other` both match.</span>
     <span class="kw">fn</span> <span class="ident">and</span><span class="op">&lt;</span><span class="ident">M</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">other</span>: <span class="ident">M</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">And</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">M</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="self">Self</span>: <span class="ident">Sized</span>,
@@ -439,13 +442,12 @@
     <span class="ident">S</span>: <span class="ident">Matcher</span>,
     <span class="ident">E</span>: <span class="ident">Matcher</span>,
 {
-    <span class="kw">for</span> <span class="ident">start_ix</span> <span class="kw">in</span> <span class="ident">match_indices</span>(<span class="ident">start</span>, <span class="ident">events</span>) {
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">start_ix</span>) <span class="op">=</span> <span class="ident">match_indices</span>(<span class="ident">start</span>, <span class="ident">events</span>).<span class="ident">next</span>() {
         <span class="kw">let</span> <span class="ident">rest</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">events</span>[<span class="ident">start_ix</span>..];
 
         <span class="kw">return</span> <span class="prelude-val">Some</span>(
             <span class="ident">end</span>.<span class="ident">first_match</span>(<span class="ident">rest</span>)
-                .<span class="ident">map</span>(<span class="op">|</span><span class="ident">end_ix</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">rest</span>[..<span class="ident">end_ix</span> <span class="op">+</span> <span class="number">1</span>])
-                .<span class="ident">unwrap_or</span>(<span class="ident">rest</span>),
+                .<span class="ident">map_or</span>(<span class="ident">rest</span>, <span class="op">|</span><span class="ident">end_ix</span><span class="op">|</span> <span class="kw-2">&amp;</span><span class="ident">rest</span>[..<span class="op">=</span><span class="ident">end_ix</span>])
         );
     }
 

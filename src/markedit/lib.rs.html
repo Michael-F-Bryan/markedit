@@ -94,6 +94,7 @@
 <span id="94">94</span>
 <span id="95">95</span>
 <span id="96">96</span>
+<span id="97">97</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! An ergonomic library for manipulating markdown documents.</span>
 <span class="doccomment">//!</span>
@@ -175,8 +176,9 @@
 <span class="doccomment">//! `collect()` the events into a `Vec` for demonstration purposes.</span>
 
 <span class="attribute">#![<span class="ident">forbid</span>(<span class="ident">unsafe_code</span>)]</span>
+<span class="attribute">#![<span class="ident">deny</span>(<span class="ident">missing_docs</span>, <span class="ident">missing_debug_implementations</span>, <span class="ident">rust_2018_idioms</span>)]</span>
 
-<span class="kw">pub</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">pulldown_cmark</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">pulldown_cmark</span>;
 
 <span class="kw">mod</span> <span class="ident">matchers</span>;
 <span class="kw">mod</span> <span class="ident">rewriters</span>;

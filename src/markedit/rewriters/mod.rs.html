@@ -160,6 +160,7 @@
 <span id="160">160</span>
 <span id="161">161</span>
 <span id="162">162</span>
+<span id="163">163</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">mod</span> <span class="ident">rewritten</span>;
 <span class="kw">mod</span> <span class="ident">writer</span>;
@@ -181,6 +182,7 @@
     <span class="doccomment">/// to the user via [`rewrite()`].</span>
     <span class="kw">fn</span> <span class="ident">rewrite_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span>, <span class="ident">writer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Writer</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span>);
 
+    <span class="doccomment">/// Use this [`Rewriter`] to rewrite a stream of [`Event`]s.</span>
     <span class="kw">fn</span> <span class="ident">rewrite</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">events</span>: <span class="ident">E</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Rewritten</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span>, <span class="ident">E</span>, <span class="self">Self</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="self">Self</span>: <span class="ident">Sized</span>,
@@ -274,13 +276,13 @@
     }
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">owned_event</span>(<span class="ident">ev</span>: <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">owned_event</span>(<span class="ident">ev</span>: <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span> {
     <span class="kw">match</span> <span class="ident">ev</span> {
         <span class="ident">Event</span>::<span class="ident">Start</span>(<span class="ident">tag</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Start</span>(<span class="ident">owned_tag</span>(<span class="ident">tag</span>)),
         <span class="ident">Event</span>::<span class="ident">End</span>(<span class="ident">tag</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">End</span>(<span class="ident">owned_tag</span>(<span class="ident">tag</span>)),
         <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
-        <span class="ident">Event</span>::<span class="ident">Code</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
-        <span class="ident">Event</span>::<span class="ident">Html</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
+        <span class="ident">Event</span>::<span class="ident">Code</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Code</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
+        <span class="ident">Event</span>::<span class="ident">Html</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Html</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
         <span class="ident">Event</span>::<span class="ident">FootnoteReference</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> {
             <span class="ident">Event</span>::<span class="ident">FootnoteReference</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>))
         },
@@ -307,7 +309,7 @@
         <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
         <span class="ident">Tag</span>::<span class="ident">List</span>(<span class="ident">u</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">List</span>(<span class="ident">u</span>),
         <span class="ident">Tag</span>::<span class="ident">Item</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">Item</span>,
-        <span class="ident">Tag</span>::<span class="ident">FootnoteDefinition</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
+        <span class="ident">Tag</span>::<span class="ident">FootnoteDefinition</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">FootnoteDefinition</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
         <span class="ident">Tag</span>::<span class="ident">Table</span>(<span class="ident">alignment</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">Table</span>(<span class="ident">alignment</span>),
         <span class="ident">Tag</span>::<span class="ident">TableHead</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">TableHead</span>,
         <span class="ident">Tag</span>::<span class="ident">TableRow</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">TableRow</span>,
