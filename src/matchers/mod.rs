@@ -1,7 +1,9 @@
+mod falling_edge;
 mod heading;
 mod one_shot;
 mod start_of_next_line;
 
+pub use falling_edge::FallingEdge;
 pub use heading::Heading;
 pub use one_shot::OneShot;
 pub use start_of_next_line::StartOfNextLine;
@@ -69,6 +71,15 @@ pub trait Matcher {
         Self: Sized,
     {
         OneShot::new(self)
+    }
+
+    /// Get a [`Matcher`] which returns `true` when `self` goes from `true` to
+    /// `false`.
+    fn falling_edge(self) -> FallingEdge<Self>
+    where
+        Self: Sized,
+    {
+        FallingEdge::new(self)
     }
 }
 
