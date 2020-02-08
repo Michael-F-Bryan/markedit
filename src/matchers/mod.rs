@@ -1,8 +1,10 @@
+mod and;
 mod falling_edge;
 mod heading;
 mod one_shot;
 mod start_of_next_line;
 
+pub use and::And;
 pub use falling_edge::FallingEdge;
 pub use heading::Heading;
 pub use one_shot::OneShot;
@@ -80,6 +82,13 @@ pub trait Matcher {
         Self: Sized,
     {
         FallingEdge::new(self)
+    }
+
+    fn and<M>(self, other: M) -> And<Self, M>
+    where Self: Sized,
+    M: Matcher,
+    {
+        And::new(self, other)
     }
 }
 

@@ -22,9 +22,7 @@
 //! let src = "# Heading\n Some text\n some more text \n\n # Another Heading";
 //!
 //! // first we need to construct our predicate
-//! let matcher = markedit::text_containing("Heading")
-//!     .inside_any_header()
-//!     .then_start_of_next_line();
+//! let matcher = Heading::with_level(1).falling_edge();
 //!
 //! // we also need a rewriting rule
 //! let rule = markedit::insert_after("## Sub-Heading", matcher);
