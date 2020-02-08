@@ -94,8 +94,6 @@
 <span id="94">94</span>
 <span id="95">95</span>
 <span id="96">96</span>
-<span id="97">97</span>
-<span id="98">98</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! An ergonomic library for manipulating markdown documents.</span>
 <span class="doccomment">//!</span>
@@ -121,9 +119,7 @@
 <span class="doccomment">//! let src = &quot;# Heading\n Some text\n some more text \n\n # Another Heading&quot;;</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // first we need to construct our predicate</span>
-<span class="doccomment">//! let matcher = markedit::text_containing(&quot;Heading&quot;)</span>
-<span class="doccomment">//!     .inside_any_header()</span>
-<span class="doccomment">//!     .then_start_of_next_line();</span>
+<span class="doccomment">//! let matcher = Heading::with_level(1).falling_edge();</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // we also need a rewriting rule</span>
 <span class="doccomment">//! let rule = markedit::insert_after(&quot;## Sub-Heading&quot;, matcher);</span>

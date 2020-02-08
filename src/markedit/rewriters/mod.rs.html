@@ -131,16 +131,28 @@
 <span id="131">131</span>
 <span id="132">132</span>
 <span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">mod</span> <span class="ident">rewritten</span>;
+<span class="kw">mod</span> <span class="ident">writer</span>;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">rewritten</span>::{<span class="ident">rewrite</span>, <span class="ident">Writer</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">rewritten</span>::{<span class="ident">rewrite</span>, <span class="ident">Rewritten</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">writer</span>::<span class="ident">Writer</span>;
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Matcher</span>;
 <span class="kw">use</span> <span class="ident">pulldown_cmark</span>::{<span class="ident">CowStr</span>, <span class="ident">Event</span>, <span class="ident">Tag</span>};
 
 <span class="doccomment">/// Something which can rewrite events.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Rewriter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Rewriter</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Process a single [`Event`].</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This may mean ignoring it, mutating it, or adding new events to the</span>
@@ -148,14 +160,22 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// The [`Writer`] is used as a temporary buffer that will then be streamed</span>
     <span class="doccomment">/// to the user via [`rewrite()`].</span>
-    <span class="kw">fn</span> <span class="ident">rewrite</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">writer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Writer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>);
+    <span class="kw">fn</span> <span class="ident">rewrite_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span>, <span class="ident">writer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Writer</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span>);
+
+    <span class="kw">fn</span> <span class="ident">rewrite</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">events</span>: <span class="ident">E</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Rewritten</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span>, <span class="ident">E</span>, <span class="self">Self</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="self">Self</span>: <span class="ident">Sized</span>,
+        <span class="ident">E</span>: <span class="ident">IntoIterator</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    {
+        <span class="ident">Rewritten</span>::<span class="ident">new</span>(<span class="ident">events</span>, <span class="self">self</span>)
+    }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">F</span><span class="op">&gt;</span> <span class="ident">Rewriter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">F</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span>, <span class="ident">F</span><span class="op">&gt;</span> <span class="ident">Rewriter</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">F</span>
 <span class="kw">where</span>
-    <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Writer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>),
+    <span class="ident">F</span>: <span class="ident">FnMut</span>(<span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Writer</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span>),
 {
-    <span class="kw">fn</span> <span class="ident">rewrite</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">writer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Writer</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) {
+    <span class="kw">fn</span> <span class="ident">rewrite_event</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">event</span>: <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span>, <span class="ident">writer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Writer</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span>) {
         <span class="self">self</span>(<span class="ident">event</span>, <span class="ident">writer</span>);
     }
 }

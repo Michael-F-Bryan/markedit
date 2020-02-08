@@ -252,11 +252,27 @@
 <span id="252">252</span>
 <span id="253">253</span>
 <span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
 </pre><div class="example-wrap"><pre class="rust ">
+<span class="kw">mod</span> <span class="ident">and</span>;
+<span class="kw">mod</span> <span class="ident">falling_edge</span>;
 <span class="kw">mod</span> <span class="ident">heading</span>;
 <span class="kw">mod</span> <span class="ident">one_shot</span>;
 <span class="kw">mod</span> <span class="ident">start_of_next_line</span>;
 
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">and</span>::<span class="ident">And</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">falling_edge</span>::<span class="ident">FallingEdge</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">heading</span>::<span class="ident">Heading</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">one_shot</span>::<span class="ident">OneShot</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">start_of_next_line</span>::<span class="ident">StartOfNextLine</span>;
@@ -318,20 +334,28 @@
         <span class="ident">StartOfNextLine</span>::<span class="ident">new</span>(<span class="self">self</span>)
     }
 
-    <span class="doccomment">/// Matches any header where the inner [`Matcher`] matches.</span>
-    <span class="kw">fn</span> <span class="ident">inside_any_header</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Heading</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="self">Self</span>: <span class="ident">Sized</span>,
-    {
-        <span class="ident">Heading</span>::<span class="ident">any_matching</span>(<span class="self">self</span>)
-    }
-
     <span class="doccomment">/// Wraps `self` in a [`Matcher`] which will only ever return `true` once.</span>
     <span class="kw">fn</span> <span class="ident">fuse</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">OneShot</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="self">Self</span>: <span class="ident">Sized</span>,
     {
         <span class="ident">OneShot</span>::<span class="ident">new</span>(<span class="self">self</span>)
+    }
+
+    <span class="doccomment">/// Get a [`Matcher`] which returns `true` when `self` goes from `true` to</span>
+    <span class="doccomment">/// `false`.</span>
+    <span class="kw">fn</span> <span class="ident">falling_edge</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">FallingEdge</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span>
+    <span class="kw">where</span>
+        <span class="self">Self</span>: <span class="ident">Sized</span>,
+    {
+        <span class="ident">FallingEdge</span>::<span class="ident">new</span>(<span class="self">self</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">and</span><span class="op">&lt;</span><span class="ident">M</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">other</span>: <span class="ident">M</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">And</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">M</span><span class="op">&gt;</span>
+    <span class="kw">where</span> <span class="self">Self</span>: <span class="ident">Sized</span>,
+    <span class="ident">M</span>: <span class="ident">Matcher</span>,
+    {
+        <span class="ident">And</span>::<span class="ident">new</span>(<span class="self">self</span>, <span class="ident">other</span>)
     }
 }
 
