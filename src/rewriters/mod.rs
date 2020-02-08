@@ -117,8 +117,8 @@ fn owned_event(ev: Event<'_>) -> Event<'static> {
         Event::Start(tag) => Event::Start(owned_tag(tag)),
         Event::End(tag) => Event::End(owned_tag(tag)),
         Event::Text(s) => Event::Text(owned_cow_str(s)),
-        Event::Code(s) => Event::Text(owned_cow_str(s)),
-        Event::Html(s) => Event::Text(owned_cow_str(s)),
+        Event::Code(s) => Event::Code(owned_cow_str(s)),
+        Event::Html(s) => Event::Html(owned_cow_str(s)),
         Event::FootnoteReference(s) => {
             Event::FootnoteReference(owned_cow_str(s))
         },
@@ -145,7 +145,7 @@ fn owned_tag(tag: Tag<'_>) -> Tag<'static> {
         Tag::CodeBlock(s) => Tag::CodeBlock(owned_cow_str(s)),
         Tag::List(u) => Tag::List(u),
         Tag::Item => Tag::Item,
-        Tag::FootnoteDefinition(s) => Tag::CodeBlock(owned_cow_str(s)),
+        Tag::FootnoteDefinition(s) => Tag::FootnoteDefinition(owned_cow_str(s)),
         Tag::Table(alignment) => Tag::Table(alignment),
         Tag::TableHead => Tag::TableHead,
         Tag::TableRow => Tag::TableRow,

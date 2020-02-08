@@ -173,13 +173,12 @@ where
     S: Matcher,
     E: Matcher,
 {
-    for start_ix in match_indices(start, events) {
+    if let Some(start_ix) = match_indices(start, events).next() {
         let rest = &events[start_ix..];
 
         return Some(
             end.first_match(rest)
-                .map(|end_ix| &rest[..end_ix + 1])
-                .unwrap_or(rest),
+                .map_or(rest, |end_ix| &rest[..=end_ix])
         );
     }
 
