@@ -141,6 +141,25 @@
 <span id="141">141</span>
 <span id="142">142</span>
 <span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">mod</span> <span class="ident">rewritten</span>;
 <span class="kw">mod</span> <span class="ident">writer</span>;
@@ -180,7 +199,7 @@
     }
 }
 
-<span class="doccomment">/// Inserts some markdown text after whatever is matched by the [`Matcher`].</span>
+<span class="doccomment">/// Inserts some markdown text before whatever is matched by the [`Matcher`].</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Examples</span>
 <span class="doccomment">///</span>
@@ -189,16 +208,19 @@
 <span class="doccomment">/// let src = &quot;# Heading\nsome text\n&quot;;</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// let first_line_after_heading = markedit::exact_text(&quot;Heading&quot;)</span>
-<span class="doccomment">///     .then_start_of_next_line();</span>
-<span class="doccomment">/// let rewriter = markedit::insert_after(&quot;## Second Heading&quot;, first_line_after_heading);</span>
+<span class="doccomment">///     .falling_edge();</span>
+<span class="doccomment">/// let rewriter = markedit::insert_markdown_before(</span>
+<span class="doccomment">///     &quot;## Second Heading&quot;,</span>
+<span class="doccomment">///     first_line_after_heading,</span>
+<span class="doccomment">/// );</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// let events = markedit::parse(src);</span>
 <span class="doccomment">/// let rewritten: Vec&lt;_&gt; = markedit::rewrite(events, rewriter).collect();</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// // if everything went to plan, the output should contain &quot;Second Heading&quot;</span>
-<span class="doccomment">/// assert!(markedit::exact_text(&quot;Second Heading&quot;).first_match(&amp;rewritten).is_some());</span>
+<span class="doccomment">/// assert!(markedit::exact_text(&quot;Second Heading&quot;).is_in(&amp;rewritten));</span>
 <span class="doccomment">/// ```</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert_after</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span>, <span class="ident">M</span>, <span class="ident">S</span><span class="op">&gt;</span>(
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert_markdown_before</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span>, <span class="ident">M</span>, <span class="ident">S</span><span class="op">&gt;</span>(
     <span class="ident">markdown_text</span>: <span class="ident">S</span>,
     <span class="ident">matcher</span>: <span class="ident">M</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Rewriter</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;src</span>
@@ -206,15 +228,23 @@
     <span class="ident">M</span>: <span class="ident">Matcher</span> <span class="op">+</span> <span class="lifetime">&#39;src</span>,
     <span class="ident">S</span>: <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;src</span>,
 {
-    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">matcher</span> <span class="op">=</span> <span class="ident">matcher</span>;
-    <span class="kw">let</span> <span class="ident">inserted_events</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">=</span>
-        <span class="kw">crate</span>::<span class="ident">parse</span>(<span class="ident">markdown_text</span>.<span class="ident">as_ref</span>())
-            .<span class="ident">map</span>(<span class="ident">owned_event</span>)
-            .<span class="ident">collect</span>();
+    <span class="kw">let</span> <span class="ident">events</span> <span class="op">=</span> <span class="kw">crate</span>::<span class="ident">parse</span>(<span class="ident">markdown_text</span>.<span class="ident">as_ref</span>())
+        .<span class="ident">map</span>(<span class="ident">owned_event</span>)
+        .<span class="ident">collect</span>();
+    <span class="ident">insert_before</span>(<span class="ident">events</span>, <span class="ident">matcher</span>)
+}
 
+<span class="doccomment">/// Splice some events into the resulting event stream before every match.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">insert_before</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span>, <span class="ident">M</span><span class="op">&gt;</span>(
+    <span class="ident">to_insert</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="kw-2">mut</span> <span class="ident">matcher</span>: <span class="ident">M</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="kw">impl</span> <span class="ident">Rewriter</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span> <span class="op">+</span> <span class="lifetime">&#39;src</span>
+<span class="kw">where</span>
+    <span class="ident">M</span>: <span class="ident">Matcher</span> <span class="op">+</span> <span class="lifetime">&#39;src</span>,
+{
     <span class="kw">move</span> <span class="op">|</span><span class="ident">ev</span>: <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span>, <span class="ident">writer</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Writer</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span><span class="op">|</span> {
         <span class="kw">if</span> <span class="ident">matcher</span>.<span class="ident">process_next</span>(<span class="kw-2">&amp;</span><span class="ident">ev</span>) {
-            <span class="ident">writer</span>.<span class="ident">extend</span>(<span class="ident">inserted_events</span>.<span class="ident">clone</span>());
+            <span class="ident">writer</span>.<span class="ident">extend</span>(<span class="ident">to_insert</span>.<span class="ident">iter</span>().<span class="ident">cloned</span>());
         }
         <span class="ident">writer</span>.<span class="ident">push</span>(<span class="ident">ev</span>);
     }
@@ -244,15 +274,15 @@
     }
 }
 
-<span class="kw">fn</span> <span class="ident">owned_event</span>(<span class="ident">ev</span>: <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">owned_event</span>(<span class="ident">ev</span>: <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Event</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span> {
     <span class="kw">match</span> <span class="ident">ev</span> {
         <span class="ident">Event</span>::<span class="ident">Start</span>(<span class="ident">tag</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Start</span>(<span class="ident">owned_tag</span>(<span class="ident">tag</span>)),
         <span class="ident">Event</span>::<span class="ident">End</span>(<span class="ident">tag</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">End</span>(<span class="ident">owned_tag</span>(<span class="ident">tag</span>)),
-        <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">s</span>.<span class="ident">into_string</span>().<span class="ident">into</span>()),
-        <span class="ident">Event</span>::<span class="ident">Code</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">s</span>.<span class="ident">into_string</span>().<span class="ident">into</span>()),
-        <span class="ident">Event</span>::<span class="ident">Html</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">s</span>.<span class="ident">into_string</span>().<span class="ident">into</span>()),
+        <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
+        <span class="ident">Event</span>::<span class="ident">Code</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
+        <span class="ident">Event</span>::<span class="ident">Html</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">Text</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
         <span class="ident">Event</span>::<span class="ident">FootnoteReference</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> {
-            <span class="ident">Event</span>::<span class="ident">FootnoteReference</span>(<span class="ident">s</span>.<span class="ident">into_string</span>().<span class="ident">into</span>())
+            <span class="ident">Event</span>::<span class="ident">FootnoteReference</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>))
         },
         <span class="ident">Event</span>::<span class="ident">SoftBreak</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">SoftBreak</span>,
         <span class="ident">Event</span>::<span class="ident">HardBreak</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Event</span>::<span class="ident">HardBreak</span>,
@@ -261,15 +291,23 @@
     }
 }
 
+<span class="kw">fn</span> <span class="ident">owned_cow_str</span>(<span class="ident">s</span>: <span class="ident">CowStr</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">CowStr</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span> {
+    <span class="kw">match</span> <span class="ident">s</span> {
+        <span class="ident">CowStr</span>::<span class="ident">Borrowed</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CowStr</span>::<span class="ident">from</span>(<span class="ident">s</span>.<span class="ident">into_string</span>()),
+        <span class="ident">CowStr</span>::<span class="ident">Boxed</span>(<span class="ident">boxed</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CowStr</span>::<span class="ident">Boxed</span>(<span class="ident">boxed</span>),
+        <span class="ident">CowStr</span>::<span class="ident">Inlined</span>(<span class="ident">inlined</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">CowStr</span>::<span class="ident">Inlined</span>(<span class="ident">inlined</span>),
+    }
+}
+
 <span class="kw">fn</span> <span class="ident">owned_tag</span>(<span class="ident">tag</span>: <span class="ident">Tag</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Tag</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span><span class="op">&gt;</span> {
     <span class="kw">match</span> <span class="ident">tag</span> {
         <span class="ident">Tag</span>::<span class="ident">Paragraph</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">Paragraph</span>,
         <span class="ident">Tag</span>::<span class="ident">Heading</span>(<span class="ident">h</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">Heading</span>(<span class="ident">h</span>),
         <span class="ident">Tag</span>::<span class="ident">BlockQuote</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">BlockQuote</span>,
-        <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">s</span>.<span class="ident">into_string</span>().<span class="ident">into</span>()),
+        <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
         <span class="ident">Tag</span>::<span class="ident">List</span>(<span class="ident">u</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">List</span>(<span class="ident">u</span>),
         <span class="ident">Tag</span>::<span class="ident">Item</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">Item</span>,
-        <span class="ident">Tag</span>::<span class="ident">FootnoteDefinition</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">s</span>.<span class="ident">into_string</span>().<span class="ident">into</span>()),
+        <span class="ident">Tag</span>::<span class="ident">FootnoteDefinition</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
         <span class="ident">Tag</span>::<span class="ident">Table</span>(<span class="ident">alignment</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">Table</span>(<span class="ident">alignment</span>),
         <span class="ident">Tag</span>::<span class="ident">TableHead</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">TableHead</span>,
         <span class="ident">Tag</span>::<span class="ident">TableRow</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">TableRow</span>,
@@ -278,10 +316,10 @@
         <span class="ident">Tag</span>::<span class="ident">Strong</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">Strong</span>,
         <span class="ident">Tag</span>::<span class="ident">Strikethrough</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">Strikethrough</span>,
         <span class="ident">Tag</span>::<span class="ident">Link</span>(<span class="ident">t</span>, <span class="ident">url</span>, <span class="ident">title</span>) <span class="op">=</span><span class="op">&gt;</span> {
-            <span class="ident">Tag</span>::<span class="ident">Link</span>(<span class="ident">t</span>, <span class="ident">url</span>.<span class="ident">into_string</span>().<span class="ident">into</span>(), <span class="ident">title</span>.<span class="ident">into_string</span>().<span class="ident">into</span>())
+            <span class="ident">Tag</span>::<span class="ident">Link</span>(<span class="ident">t</span>, <span class="ident">owned_cow_str</span>(<span class="ident">url</span>), <span class="ident">owned_cow_str</span>(<span class="ident">title</span>))
         },
         <span class="ident">Tag</span>::<span class="ident">Image</span>(<span class="ident">t</span>, <span class="ident">url</span>, <span class="ident">alt</span>) <span class="op">=</span><span class="op">&gt;</span> {
-            <span class="ident">Tag</span>::<span class="ident">Image</span>(<span class="ident">t</span>, <span class="ident">url</span>.<span class="ident">into_string</span>().<span class="ident">into</span>(), <span class="ident">alt</span>.<span class="ident">into_string</span>().<span class="ident">into</span>())
+            <span class="ident">Tag</span>::<span class="ident">Image</span>(<span class="ident">t</span>, <span class="ident">owned_cow_str</span>(<span class="ident">url</span>), <span class="ident">owned_cow_str</span>(<span class="ident">alt</span>))
         },
     }
 }
