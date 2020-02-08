@@ -11,6 +11,7 @@ pub struct StartOfNextLine<M> {
 }
 
 impl<M> StartOfNextLine<M> {
+    /// Create a new [`StartOfNextLine`] matcher.
     pub const fn new(inner: M) -> Self {
         StartOfNextLine {
             inner,

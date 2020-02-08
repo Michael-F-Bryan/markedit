@@ -29,6 +29,7 @@ use std::borrow::Borrow;
 /// assert_is_matcher(|ev: &Event<'_>| true);
 /// ```
 pub trait Matcher {
+    /// Evaluate this predicate against an event from an [`Event`] stream.
     fn matches_event(&mut self, event: &Event<'_>) -> bool;
 
     /// Find the index of the first [`Event`] which is matched by this
@@ -84,6 +85,7 @@ pub trait Matcher {
         FallingEdge::new(self)
     }
 
+    /// Get a [`Matcher`] which matches when `self` and `other` both match.
     fn and<M>(self, other: M) -> And<Self, M>
     where
         Self: Sized,

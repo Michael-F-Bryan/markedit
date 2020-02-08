@@ -18,6 +18,7 @@ pub trait Rewriter<'src> {
     /// to the user via [`rewrite()`].
     fn rewrite_event(&mut self, event: Event<'src>, writer: &mut Writer<'src>);
 
+    /// Use this [`Rewriter`] to rewrite a stream of [`Event`]s.
     fn rewrite<E>(self, events: E) -> Rewritten<'src, E, Self>
     where
         Self: Sized,
@@ -111,7 +112,7 @@ where
     }
 }
 
-pub fn owned_event(ev: Event<'_>) -> Event<'static> {
+fn owned_event(ev: Event<'_>) -> Event<'static> {
     match ev {
         Event::Start(tag) => Event::Start(owned_tag(tag)),
         Event::End(tag) => Event::End(owned_tag(tag)),

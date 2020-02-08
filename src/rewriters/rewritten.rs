@@ -18,6 +18,7 @@ where
 }
 
 /// A stream of [`Event`]s that have been modified by a [`Rewriter`].
+#[derive(Debug)]
 pub struct Rewritten<'src, E, R> {
     events: E,
     rewriter: R,
@@ -25,12 +26,13 @@ pub struct Rewritten<'src, E, R> {
 }
 
 impl<'src, E, R> Rewritten<'src, E, R> {
+    /// Create a new [`Rewritten`] iterator.
     pub fn new(events: E, rewriter: R) -> Self {
-    Rewritten {
-        rewriter,
-        events: events,
-        writer: Writer::new(),
-    }
+        Rewritten {
+            rewriter,
+            events,
+            writer: Writer::new(),
+        }
     }
 }
 

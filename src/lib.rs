@@ -78,8 +78,9 @@
 //! `collect()` the events into a `Vec` for demonstration purposes.
 
 #![forbid(unsafe_code)]
+#![deny(missing_docs, missing_debug_implementations, rust_2018_idioms)]
 
-pub extern crate pulldown_cmark;
+pub use pulldown_cmark;
 
 mod matchers;
 mod rewriters;

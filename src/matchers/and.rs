@@ -9,6 +9,7 @@ pub struct And<L, R> {
 }
 
 impl<L, R> And<L, R> {
+    /// Create a new [`And`] matcher.
     pub const fn new(left: L, right: R) -> Self { And { left, right } }
 }
 

@@ -9,6 +9,7 @@ pub struct OneShot<M> {
 }
 
 impl<M> OneShot<M> {
+    /// Create a [`OneShot`] matcher.
     pub const fn new(inner: M) -> Self {
         OneShot {
             inner,

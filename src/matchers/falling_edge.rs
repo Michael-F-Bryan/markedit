@@ -28,6 +28,7 @@ pub struct FallingEdge<M> {
 }
 
 impl<M> FallingEdge<M> {
+    /// Create a new [`FallingEdge`] matcher.
     pub const fn new(inner: M) -> Self {
         FallingEdge {
             inner,
