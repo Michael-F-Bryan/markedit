@@ -1,10 +1,16 @@
 # markedit
 
 [![Build Status](https://travis-ci.com/Michael-F-Bryan/markedit.svg?branch=master)](https://travis-ci.com/Michael-F-Bryan/markedit)
+[![Docs.rs Badge](https://docs.rs/markedit/badge.svg)](https://docs.rs/markedit)
+[![Crates.io](https://img.shields.io/crates/v/markedit)](https://crates.io/crates/markedit)
+![Crates.io](https://img.shields.io/crates/l/markedit)
 
 ([API Docs])
 
 An ergonomic library for manipulating unstructured Markdown documents.
+
+You may want to check out [the associated blog post][blog] to get a
+high-level understanding of this library and how it can be used.
 
 ## License
 
@@ -32,4 +38,4 @@ do their best to avoid them, and welcome help in analyzing and fixing them.
 
 [API Docs]: https://michael-f-bryan.github.io/markedit
 [crev]: https://github.com/crev-dev/cargo-crev
-
+[blog]: http://adventures.michaelfbryan.com/posts/markedit/
