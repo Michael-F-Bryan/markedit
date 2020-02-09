@@ -9,8 +9,16 @@ repository = "https://github.com/Michael-F-Bryan/markedit"
 keywords = ["markdown", "streaming", "edit"]
 categories = ["text-processing"]
 
+[badges]
+travis-ci = { repository = "Michael-F-Bryan/markedit", branch = "master" }
+
 [dependencies]
 pulldown-cmark = "0.6.1"
 
-[badges]
-travis-ci = { repository = "Michael-F-Bryan/markedit", branch = "master" }
+[dev-dependencies]
+criterion = "0.3"
+glob = "0.3.0"
+
+[[bench]]
+name = "benchmarks"
+harness = false
