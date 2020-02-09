@@ -20,7 +20,7 @@ fn known_markdown_files() -> impl Iterator<Item = PathBuf> {
         .unwrap()
         .map(|entry| entry.unwrap());
 
-    blog_posts.take(5).chain(markedit_files)
+    blog_posts.chain(markedit_files)
 }
 
 fn canonical_name(path: &Path) -> &str {
