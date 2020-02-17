@@ -56,3 +56,38 @@ where
         self.writer.buffer.pop_front()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use pulldown_cmark::Tag;
+
+    #[test]
+    fn ignore_some_events() {
+        let events = vec![
+            Event::Start(Tag::Paragraph),
+            Event::Text("This is some text.".into()),
+            Event::Start(Tag::Heading(2)),
+            Event::Text("This is some more text.".into()),
+        ];
+
+        let rewritten: Vec<Event<'static>> = rewrite(
+            events,
+            |event: Event<'static>, writer: &mut Writer<'static>| {
+                if let event @ Event::Text(_) = event {
+                    writer.push(event);
+                }
+            },
+        )
+        .collect();
+
+        assert_eq!(
+            rewritten,
+            vec![
+                Event::Text("This is some text.".into()),
+                Event::Text("This is some more text.".into()),
+            ]
+        );
+    }
+}
