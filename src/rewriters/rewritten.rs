@@ -44,16 +44,16 @@ where
     type Item = Event<'src>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // we're still working through items buffered by the rewriter
-        if let Some(ev) = self.writer.buffer.pop_front() {
-            return Some(ev);
+        loop {
+            // we're still working through items buffered by the rewriter
+            if let Some(ev) = self.writer.buffer.pop_front() {
+                return Some(ev);
+            }
+
+            // we need to pop another event and process it
+            let event = self.events.next()?;
+            self.rewriter.rewrite_event(event, &mut self.writer);
         }
-
-        // we need to pop another event and process it
-        let event = self.events.next()?;
-        self.rewriter.rewrite_event(event, &mut self.writer);
-
-        self.writer.buffer.pop_front()
     }
 }
 
