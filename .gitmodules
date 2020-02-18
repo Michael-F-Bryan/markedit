@@ -1,3 +1,3 @@
 [submodule "benches/adventures.michaelfbryan.com"]
 	path = benches/adventures.michaelfbryan.com
-	url = git@github.com:Michael-F-Bryan/adventures.michaelfbryan.com.git
+	url = https://github.com/Michael-F-Bryan/adventures.michaelfbryan.com.git
