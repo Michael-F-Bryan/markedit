@@ -44,15 +44,50 @@ where
     type Item = Event<'src>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // we're still working through items buffered by the rewriter
-        if let Some(ev) = self.writer.buffer.pop_front() {
-            return Some(ev);
+        loop {
+            // we're still working through items buffered by the rewriter
+            if let Some(ev) = self.writer.buffer.pop_front() {
+                return Some(ev);
+            }
+
+            // we need to pop another event and process it
+            let event = self.events.next()?;
+            self.rewriter.rewrite_event(event, &mut self.writer);
         }
+    }
+}
 
-        // we need to pop another event and process it
-        let event = self.events.next()?;
-        self.rewriter.rewrite_event(event, &mut self.writer);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-        self.writer.buffer.pop_front()
+    use pulldown_cmark::Tag;
+
+    #[test]
+    fn ignore_some_events() {
+        let events = vec![
+            Event::Start(Tag::Paragraph),
+            Event::Text("This is some text.".into()),
+            Event::Start(Tag::Heading(2)),
+            Event::Text("This is some more text.".into()),
+        ];
+
+        let rewritten: Vec<Event<'static>> = rewrite(
+            events,
+            |event: Event<'static>, writer: &mut Writer<'static>| {
+                if let event @ Event::Text(_) = event {
+                    writer.push(event);
+                }
+            },
+        )
+        .collect();
+
+        assert_eq!(
+            rewritten,
+            vec![
+                Event::Text("This is some text.".into()),
+                Event::Text("This is some more text.".into()),
+            ]
+        );
     }
 }
