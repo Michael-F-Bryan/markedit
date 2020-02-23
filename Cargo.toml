@@ -8,6 +8,7 @@ description = "An ergonomic library for manipulating unstructured Markdown docum
 repository = "https://github.com/Michael-F-Bryan/markedit"
 keywords = ["markdown", "streaming", "edit"]
 categories = ["text-processing"]
+exclude = ["benches/adventures.michaelfbryan.com"]
 
 [badges]
 travis-ci = { repository = "Michael-F-Bryan/markedit", branch = "master" }
