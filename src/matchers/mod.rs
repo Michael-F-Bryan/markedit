@@ -34,8 +34,15 @@ pub trait Matcher {
 
     /// Find the index of the first [`Event`] which is matched by this
     /// predicate.
-    fn first_match(&mut self, events: &[Event<'_>]) -> Option<usize> {
-        events.iter().position(|ev| self.matches_event(ev))
+    fn first_match<'src, I, E>(mut self, events: I) -> Option<usize>
+    where
+        Self: Sized,
+        I: IntoIterator<Item = E> + 'src,
+        E: Borrow<Event<'src>> + 'src,
+    {
+        events
+            .into_iter()
+            .position(|ev| self.matches_event(ev.borrow()))
     }
 
     /// Checks whether this [`Matcher`] would match anything in a stream of
@@ -93,6 +100,17 @@ pub trait Matcher {
     {
         And::new(self, other)
     }
+
+    /// Borrows the [`Matcher`] , rather than consuming it.
+    ///
+    /// This allows you to apply [`Matcher`] adaptors while retaining ownership
+    /// of the original [`Matcher`].
+    fn by_ref(&mut self) -> Ref<'_, Self>
+    where
+        Self: Sized,
+    {
+        Ref(self)
+    }
 }
 
 impl<F> Matcher for F
@@ -129,20 +147,25 @@ impl Matcher for Always {
 ///     assert_eq!(events[ix], Event::Text("Header".into()));
 /// }
 /// ```
-pub fn match_indices<'ev, M>(
+pub fn match_indices<'ev, M, I>(
     mut matcher: M,
-    events: &'ev [Event<'ev>],
+    events: I,
 ) -> impl Iterator<Item = usize> + 'ev
 where
     M: Matcher + 'ev,
+    I: IntoIterator + 'ev,
+    I::Item: Borrow<Event<'ev>> + 'ev,
 {
-    events.iter().enumerate().filter_map(move |(i, event)| {
-        if matcher.matches_event(event) {
-            Some(i)
-        } else {
-            None
-        }
-    })
+    events
+        .into_iter()
+        .enumerate()
+        .filter_map(move |(i, event)| {
+            if matcher.matches_event(event.borrow()) {
+                Some(i)
+            } else {
+                None
+            }
+        })
 }
 
 /// Gets all [`Event`]s between (inclusive) two matchers.
@@ -166,7 +189,7 @@ where
 /// ```
 pub fn between<'ev, S, E>(
     start: S,
-    mut end: E,
+    end: E,
     events: &'ev [Event<'ev>],
 ) -> Option<&'ev [Event<'ev>]>
 where
@@ -178,7 +201,7 @@ where
 
         return Some(
             end.first_match(rest)
-                .map_or(rest, |end_ix| &rest[..=end_ix])
+                .map_or(rest, |end_ix| &rest[..=end_ix]),
         );
     }
 
@@ -264,5 +287,21 @@ pub fn link_with_url_containing<S: AsRef<str>>(needle: S) -> impl Matcher {
             link.as_ref().contains(needle.as_ref())
         },
         _ => false,
+    }
+}
+
+/// A glorified `&mut Matcher`.
+///
+/// This is the return value for [`Matcher::by_ref()`], you won't normally use
+/// it directly.
+#[derive(Debug)]
+pub struct Ref<'a, M>(&'a mut M);
+
+impl<'a, M> Matcher for Ref<'a, M>
+where
+    M: Matcher,
+{
+    fn matches_event(&mut self, event: &Event<'_>) -> bool {
+        self.0.matches_event(event)
     }
 }

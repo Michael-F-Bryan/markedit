@@ -78,7 +78,7 @@ mod tests {
         let events: Vec<_> = Parser::new(src).collect();
         let mut matcher = StartOfNextLine::new(crate::exact_text("Heading"));
 
-        let got = matcher.first_match(&events).unwrap();
+        let got = matcher.by_ref().first_match(events).unwrap();
 
         assert_eq!(got, 3);
         // we're on the first start tag, so at nesting level 1
