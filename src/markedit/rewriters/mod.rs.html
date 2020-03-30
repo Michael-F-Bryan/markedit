@@ -161,6 +161,11 @@
 <span id="161">161</span>
 <span id="162">162</span>
 <span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">mod</span> <span class="ident">rewritten</span>;
 <span class="kw">mod</span> <span class="ident">writer</span>;
@@ -169,7 +174,7 @@
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">writer</span>::<span class="ident">Writer</span>;
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Matcher</span>;
-<span class="kw">use</span> <span class="ident">pulldown_cmark</span>::{<span class="ident">CowStr</span>, <span class="ident">Event</span>, <span class="ident">Tag</span>};
+<span class="kw">use</span> <span class="ident">pulldown_cmark</span>::{<span class="ident">CodeBlockKind</span>, <span class="ident">CowStr</span>, <span class="ident">Event</span>, <span class="ident">Tag</span>};
 
 <span class="doccomment">/// Something which can rewrite events.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Rewriter</span><span class="op">&lt;</span><span class="lifetime">&#39;src</span><span class="op">&gt;</span> {
@@ -306,7 +311,12 @@
         <span class="ident">Tag</span>::<span class="ident">Paragraph</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">Paragraph</span>,
         <span class="ident">Tag</span>::<span class="ident">Heading</span>(<span class="ident">h</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">Heading</span>(<span class="ident">h</span>),
         <span class="ident">Tag</span>::<span class="ident">BlockQuote</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">BlockQuote</span>,
-        <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
+        <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">CodeBlockKind</span>::<span class="ident">Indented</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">CodeBlockKind</span>::<span class="ident">Indented</span>)
+        },
+        <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">CodeBlockKind</span>::<span class="ident">Fenced</span>(<span class="ident">s</span>)) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">Tag</span>::<span class="ident">CodeBlock</span>(<span class="ident">CodeBlockKind</span>::<span class="ident">Fenced</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)))
+        },
         <span class="ident">Tag</span>::<span class="ident">List</span>(<span class="ident">u</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">List</span>(<span class="ident">u</span>),
         <span class="ident">Tag</span>::<span class="ident">Item</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">Item</span>,
         <span class="ident">Tag</span>::<span class="ident">FootnoteDefinition</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Tag</span>::<span class="ident">FootnoteDefinition</span>(<span class="ident">owned_cow_str</span>(<span class="ident">s</span>)),
