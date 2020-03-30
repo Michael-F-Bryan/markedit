@@ -5,7 +5,7 @@ pub use rewritten::{rewrite, Rewritten};
 pub use writer::Writer;
 
 use crate::Matcher;
-use pulldown_cmark::{CowStr, Event, Tag};
+use pulldown_cmark::{CodeBlockKind, CowStr, Event, Tag};
 
 /// Something which can rewrite events.
 pub trait Rewriter<'src> {
@@ -142,7 +142,12 @@ fn owned_tag(tag: Tag<'_>) -> Tag<'static> {
         Tag::Paragraph => Tag::Paragraph,
         Tag::Heading(h) => Tag::Heading(h),
         Tag::BlockQuote => Tag::BlockQuote,
-        Tag::CodeBlock(s) => Tag::CodeBlock(owned_cow_str(s)),
+        Tag::CodeBlock(CodeBlockKind::Indented) => {
+            Tag::CodeBlock(CodeBlockKind::Indented)
+        },
+        Tag::CodeBlock(CodeBlockKind::Fenced(s)) => {
+            Tag::CodeBlock(CodeBlockKind::Fenced(owned_cow_str(s)))
+        },
         Tag::List(u) => Tag::List(u),
         Tag::Item => Tag::Item,
         Tag::FootnoteDefinition(s) => Tag::FootnoteDefinition(owned_cow_str(s)),
