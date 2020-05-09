@@ -1,6 +1,8 @@
+mod rewrite_between;
 mod rewritten;
 mod writer;
 
+pub use rewrite_between::rewrite_between;
 pub use rewritten::{rewrite, Rewritten};
 pub use writer::Writer;
 
