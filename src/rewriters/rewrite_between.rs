@@ -3,6 +3,38 @@ use pulldown_cmark::Event;
 
 /// Get a new stream of [`Event`]s where the things between `start` and `end`
 /// are automatically rewritten.
+///
+/// # Note
+///
+/// Unlike most APIs in Rust this function matches an **inclusive** range.
+///
+/// # Examples
+///
+/// ```rust
+/// use pulldown_cmark::{Event, Parser, Tag};
+///
+/// fn uppercase_all_text<'src>(events: &mut Vec<Event<'src>>) {
+///     for event in events {
+///         if let Event::Text(ref mut text) = event {
+///             *text = text.to_uppercase().into();
+///         }
+///     }
+/// }
+///
+/// let src = "# This is a heading\nand a normal line";
+///
+/// let got: Vec<_> = markedit::rewrite_between(
+///     Parser::new(src),
+///     |ev: &Event<'_>| match ev { Event::Start(Tag::Heading(_)) => true, _ => false },
+///     |ev: &Event<'_>| match ev { Event::End(Tag::Heading(_)) => true, _ => false },
+///     uppercase_all_text,
+///     )
+///     .collect();
+///
+/// let should_be: Vec<_> = Parser::new("# THIS IS A HEADING\nand a normal line").collect();
+///
+/// assert_eq!(got, should_be);
+/// ```
 pub fn rewrite_between<'src, S, E, I, F>(
     events: I,
     start: S,
@@ -49,7 +81,6 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             if !self.buffer.is_empty() {
-                println!("Buffered");
                 return Some(self.buffer.remove(0));
             }
 
@@ -166,10 +197,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Heading;
     use pulldown_cmark::{Parser, Tag};
 
-    fn uppercase<'src>(events: &mut Vec<Event<'src>>) {
+    fn uppercase_all_text<'src>(events: &mut Vec<Event<'src>>) {
         dbg!(&events);
 
         for event in events {
@@ -182,15 +212,24 @@ mod tests {
     #[test]
     fn uppercase_text_in_a_heading() {
         let src = "# This is a heading\nand a normal line";
-        let start = Heading::any_level();
-        let end = |ev: &Event<'_>| matches!(ev, Event::End(Tag::Heading(_)));
 
-        let got: Vec<_> =
-            rewrite_between(Parser::new(src), start, end, |ev| uppercase(ev))
-                .collect();
+        let got: Vec<_> = rewrite_between(
+            Parser::new(src),
+            |ev: &Event<'_>| match ev {
+                Event::Start(Tag::Heading(_)) => true,
+                _ => false,
+            },
+            |ev: &Event<'_>| match ev {
+                Event::End(Tag::Heading(_)) => true,
+                _ => false,
+            },
+            uppercase_all_text,
+        )
+        .collect();
 
         let should_be: Vec<_> =
             Parser::new("# THIS IS A HEADING\nand a normal line").collect();
+
         assert_eq!(got, should_be);
     }
 }
