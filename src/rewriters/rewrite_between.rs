@@ -27,6 +27,7 @@ where
 }
 
 /// The iterator returned by [`rewrite_between()`].
+#[derive(Debug)]
 pub struct RewriteBetween<'src, S, E, I, F> {
     events: I,
     start: S,
@@ -46,41 +47,47 @@ where
     type Item = Event<'src>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.buffer.is_empty() {
-            while let Some(event) = self.events.next() {
-                // temporarily swap out the current state with a dummy value so
-                // we can update it
-                let current_state =
-                    std::mem::replace(&mut self.state, State::default());
-                handle_event(
-                    current_state,
-                    &mut self.start,
-                    &mut self.end,
-                    event,
-                    &mut self.buffer,
-                    &mut self.rewrite,
-                );
-                unimplemented!()
+        loop {
+            if !self.buffer.is_empty() {
+                println!("Buffered");
+                return Some(self.buffer.remove(0));
             }
-        }
 
-        if self.buffer.is_empty() {
-            None
-        } else {
-            Some(self.buffer.remove(0))
+            match self.events.next() {
+                Some(event) => {
+                    // temporarily swap out the current state with a dummy value
+                    // so we can update it
+                    let current_state =
+                        std::mem::replace(&mut self.state, State::default());
+                    self.state = handle_event(
+                        current_state,
+                        &mut self.start,
+                        &mut self.end,
+                        event,
+                        &mut self.buffer,
+                        &mut self.rewrite,
+                    );
+                },
+                None => {
+                    if self.buffer.is_empty() {
+                        return None;
+                    }
+                },
+            }
         }
     }
 }
 
 impl<'src, S, E, I, F> RewriteBetween<'src, S, E, I, F> {}
 
+#[derive(Debug, PartialEq)]
 enum State<'src> {
-    WaitingForCodeblocks,
-    ReadingCodeblock { buffer: Vec<Event<'src>> },
+    Waiting,
+    Reading { buffer: Vec<Event<'src>> },
 }
 
 impl<'src> Default for State<'src> {
-    fn default() -> State<'src> { State::WaitingForCodeblocks }
+    fn default() -> State<'src> { State::Waiting }
 }
 
 fn handle_event<'src, S, E, F>(
@@ -97,36 +104,42 @@ where
     E: Matcher,
 {
     match current_state {
-        State::WaitingForCodeblocks => {
-            handle_waiting_for_start(event, start, processed)
+        State::Waiting => {
+            handle_waiting_for_start(event, start, end, processed)
         },
-        State::ReadingCodeblock { buffer } => {
-            handle_reading_codeblock(buffer, event, end, processed, rewrite)
-        },
+        State::Reading { buffer } => handle_reading_codeblock(
+            buffer, event, start, end, processed, rewrite,
+        ),
     }
 }
 
-fn handle_waiting_for_start<'src, S>(
+fn handle_waiting_for_start<'src, S, E>(
     event: Event<'src>,
     start: &mut S,
+    end: &mut E,
     processed: &mut Vec<Event<'src>>,
 ) -> State<'src>
 where
     S: Matcher,
+    E: Matcher,
 {
-    if start.matches_event(&event) {
-        State::ReadingCodeblock {
+    let start_matched = start.matches_event(&event);
+    let _ = end.matches_event(&event);
+
+    if start_matched {
+        State::Reading {
             buffer: vec![event],
         }
     } else {
         processed.push(event);
-        State::WaitingForCodeblocks
+        State::Waiting
     }
 }
 
-fn handle_reading_codeblock<'src, E, F>(
+fn handle_reading_codeblock<'src, E, F, S>(
     mut buffer: Vec<Event<'src>>,
     event: Event<'src>,
+    start: &mut S,
     end: &mut E,
     processed: &mut Vec<Event<'src>>,
     transform: &mut F,
@@ -134,13 +147,50 @@ fn handle_reading_codeblock<'src, E, F>(
 where
     F: FnMut(&mut Vec<Event<'src>>),
     E: Matcher,
+    S: Matcher,
 {
-    if end.matches_event(&event) {
+    let _ = start.matches_event(&event);
+    let end_matches = end.matches_event(&event);
+
+    if end_matches {
+        buffer.push(event);
         transform(&mut buffer);
         processed.extend(buffer.drain(..));
-        State::WaitingForCodeblocks
+        State::Waiting
     } else {
         buffer.push(event);
-        State::ReadingCodeblock { buffer }
+        State::Reading { buffer }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Heading;
+    use pulldown_cmark::{Parser, Tag};
+
+    fn uppercase<'src>(events: &mut Vec<Event<'src>>) {
+        dbg!(&events);
+
+        for event in events {
+            if let Event::Text(ref mut text) = event {
+                *text = text.to_uppercase().into();
+            }
+        }
+    }
+
+    #[test]
+    fn uppercase_text_in_a_heading() {
+        let src = "# This is a heading\nand a normal line";
+        let start = Heading::any_level();
+        let end = |ev: &Event<'_>| matches!(ev, Event::End(Tag::Heading(_)));
+
+        let got: Vec<_> =
+            rewrite_between(Parser::new(src), start, end, |ev| uppercase(ev))
+                .collect();
+
+        let should_be: Vec<_> =
+            Parser::new("# THIS IS A HEADING\nand a normal line").collect();
+        assert_eq!(got, should_be);
     }
 }
