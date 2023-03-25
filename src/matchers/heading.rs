@@ -1,16 +1,16 @@
 use crate::matchers::Matcher;
-use pulldown_cmark::{Event, Tag};
+use pulldown_cmark::{Event, Tag, HeadingLevel};
 
 /// Matches the items inside a heading tag, including the start and end tags.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Heading {
     inside_heading: bool,
-    level: Option<u32>,
+    level: Option<HeadingLevel>,
 }
 
 impl Heading {
     /// Create a new [`Heading`].
-    const fn new(level: Option<u32>) -> Self {
+    const fn new(level: Option<HeadingLevel>) -> Self {
         Heading {
             level,
             inside_heading: false,
@@ -21,9 +21,9 @@ impl Heading {
     pub const fn any_level() -> Self { Heading::new(None) }
 
     /// Matches only headings with the desired level.
-    pub const fn with_level(level: u32) -> Self { Heading::new(Some(level)) }
+    pub const fn with_level(level: HeadingLevel) -> Self { Heading::new(Some(level)) }
 
-    fn matches_level(&self, level: u32) -> bool {
+    fn matches_level(&self, level: HeadingLevel) -> bool {
         match self.level {
             Some(expected) => level == expected,
             None => true,
@@ -34,10 +34,10 @@ impl Heading {
 impl Matcher for Heading {
     fn matches_event(&mut self, event: &Event<'_>) -> bool {
         match event {
-            Event::Start(Tag::Heading(level)) if self.matches_level(*level) => {
+            Event::Start(Tag::Heading(level , _, _)) if self.matches_level(*level) => {
                 self.inside_heading = true;
             },
-            Event::End(Tag::Heading(level)) if self.matches_level(*level) => {
+            Event::End(Tag::Heading(level, _, _)) if self.matches_level(*level) => {
                 self.inside_heading = false;
                 // make sure the end tag is also matched
                 return true;
@@ -67,12 +67,12 @@ mod tests {
             (Event::Start(Tag::Paragraph), false),
             (Event::Text("This is some text.".into()), false),
             (Event::End(Tag::Paragraph), false),
-            (Event::Start(Tag::Heading(2)), true),
+            (Event::Start(Tag::Heading(HeadingLevel::H2, None, vec![])), true),
             (Event::Text("Then a ".into()), true),
             (Event::Start(Tag::Emphasis), true),
             (Event::Text("header".into()), true),
             (Event::End(Tag::Emphasis), true),
-            (Event::End(Tag::Heading(2)), true),
+            (Event::End(Tag::Heading(HeadingLevel::H2, None, vec![])), true),
             (Event::Start(Tag::Paragraph), false),
             (
                 Event::Start(Tag::Link(

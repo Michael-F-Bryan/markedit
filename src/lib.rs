@@ -16,13 +16,13 @@
 //! markdown after a heading.
 //!
 //! ```rust
-//! use pulldown_cmark::{Event, Tag};
+//! use pulldown_cmark::{Event, Tag, HeadingLevel};
 //! use markedit::{Matcher, Heading};
 //!
 //! let src = "# Heading\n Some text\n some more text \n\n # Another Heading";
 //!
 //! // first we need to construct our predicate
-//! let matcher = Heading::with_level(1).falling_edge();
+//! let matcher = Heading::with_level(HeadingLevel::H1).falling_edge();
 //!
 //! // we also need a rewriting rule
 //! let rule = markedit::insert_markdown_before("## Sub-Heading", matcher);
@@ -36,9 +36,9 @@
 //! // the heading before we want to insert
 //! assert_eq!(mutated[1], Event::Text("Heading".into()));
 //! // our inserted tags
-//! assert_eq!(mutated[3], Event::Start(Tag::Heading(2)));
+//! assert_eq!(mutated[3], Event::Start(Tag::Heading(HeadingLevel::H2, None, vec![])));
 //! assert_eq!(mutated[4], Event::Text("Sub-Heading".into()));
-//! assert_eq!(mutated[5], Event::End(Tag::Heading(2)));
+//! assert_eq!(mutated[5], Event::End(Tag::Heading(HeadingLevel::H2, None, vec![])));
 //! // "Some text" is the line after
 //! assert_eq!(mutated[7], Event::Text("Some text".into()));
 //! ```
