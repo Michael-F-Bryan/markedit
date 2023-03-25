@@ -58,14 +58,15 @@ where
 /// // if everything went to plan, the output should contain "Second Heading"
 /// assert!(markedit::exact_text("Second Heading").is_in(&rewritten));
 /// ```
-pub fn insert_markdown_before<'src, M>(
-    markdown_text: &'src str,
+pub fn insert_markdown_before<'src, M, S>(
+    markdown_text: S,
     matcher: M,
 ) -> impl Rewriter<'src> + 'src
 where
     M: Matcher + 'src,
+    S: Into<&'src str>,
 {
-    let events = crate::parse(markdown_text).collect();
+    let events = crate::parse(markdown_text.into()).collect();
     insert_before(events, matcher)
 }
 
