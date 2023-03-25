@@ -14,11 +14,10 @@ exclude = ["benches/adventures.michaelfbryan.com"]
 travis-ci = { repository = "Michael-F-Bryan/markedit", branch = "master" }
 
 [dependencies]
-pulldown-cmark = "0.7"
-
+pulldown-cmark = "0.9.2"
 [dev-dependencies]
-criterion = "0.3"
-glob = "0.3.0"
+criterion = "0.4"
+glob = "0.3"
 
 [[bench]]
 name = "benchmarks"
