@@ -45,7 +45,7 @@ pub trait Matcher {
             .position(|ev| self.matches_event(ev.borrow()))
     }
 
-    /// Checks whether this [`Matcher`] would match anything in a stream of
+    /// Checks whether this [`Matcher`] matches anything in a stream of
     /// [`Event`]s.
     ///
     /// # Examples

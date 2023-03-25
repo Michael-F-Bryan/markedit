@@ -68,7 +68,7 @@ mod tests {
         let events = vec![
             Event::Start(Tag::Paragraph),
             Event::Text("This is some text.".into()),
-            Event::Start(Tag::Heading(2)),
+            Event::Start(Tag::Heading(pulldown_cmark::HeadingLevel::H2, None, vec![])),
             Event::Text("This is some more text.".into()),
         ];
 

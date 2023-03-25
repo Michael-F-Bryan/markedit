@@ -2,7 +2,7 @@ use criterion::{
     criterion_group, criterion_main, BenchmarkId, Criterion, Throughput,
 };
 use markedit::{Heading, Matcher, Rewriter, Writer};
-use pulldown_cmark::Event;
+use pulldown_cmark::{Event, HeadingLevel};
 use std::path::{Path, PathBuf};
 
 fn known_markdown_files() -> impl Iterator<Item = PathBuf> {
@@ -54,7 +54,7 @@ pub fn rewriting(c: &mut Criterion) {
                     b.iter(|| {
                         markedit::insert_markdown_before(
                             "## Sub-Heading",
-                            Heading::with_level(2).falling_edge(),
+                            Heading::with_level(pulldown_cmark::HeadingLevel::H2).falling_edge(),
                         )
                         .rewrite(markedit::parse(src))
                         .count()
@@ -80,7 +80,7 @@ pub fn rewriting(c: &mut Criterion) {
                 &src,
                 |b, src| {
                     b.iter(|| {
-                        upper_case_header_text(2)
+                        upper_case_header_text(HeadingLevel::H2)
                             .rewrite(markedit::parse(src))
                             .count()
                     })
@@ -89,7 +89,7 @@ pub fn rewriting(c: &mut Criterion) {
     }
 }
 
-fn upper_case_header_text<'src>(level: u32) -> impl Rewriter<'src> {
+fn upper_case_header_text<'src>(level: HeadingLevel) -> impl Rewriter<'src> {
     let mut matcher = Heading::with_level(level);
 
     move |ev: Event<'src>, writer: &mut Writer<'src>| {
